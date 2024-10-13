@@ -1,0 +1,15 @@
+services:
+# Digital Poster app for Plex, Sonarr, Radarr, and Readarr
+  posterr:
+    <<: *common-keys-apps
+    image: petersem/posterr
+    container_name: posterr
+    profiles: ["media", "all"]
+    ports:
+      - $POSTERR_PORT:3000
+    environment:
+      <<: *default-tz-puid-pgid
+#      BASEPATH: ""
+    volumes:
+      - $DOCKERDIR/posterr/config:/usr/src/app/config
+      - $DOCKERDIR/posterr/custom:/usr/src/app/public/custom

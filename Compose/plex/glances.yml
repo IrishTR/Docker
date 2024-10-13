@@ -1,0 +1,38 @@
+services:
+# Glances - System Information
+  glances:
+    <<: *common-keys-apps
+    image: nicolargo/glances
+    container_name: glances
+    profiles: ["infra", "all"]
+    privileged: true
+#    ports:
+#      - "$GLANCES_PORT:61208"
+    pid: host
+    volumes:
+      - $DOCKERDIR/glances/glances.conf:/glances/conf/glances.conf # Use this if you want to add a glances.conf file
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      <<: *default-tz-puid-pgid
+#      GLANCES_OPT: "-C /glances/conf/glances.conf --quiet --export influxdb"
+      GLANCES_OPT: "-w --password"
+    secrets:
+      - source: glances_password
+        target: /root/.config/glances/glances.pwd
+    labels:
+      - "traefik.enable=true"
+      # HTTP Routers Auth Bypass
+      - "traefik.http.routers.glances-rtr-bypass.entrypoints=websecure"
+      - "traefik.http.routers.glances-rtr-bypass.rule=Host(`glances.$DOMAINNAME`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.glances-rtr-bypass.priority=100"
+      # HTTP Routers Auth
+      - "traefik.http.routers.glances-rtr.entrypoints=websecure"
+      - "traefik.http.routers.glances-rtr.rule=Host(`glances.$DOMAINNAME`)"
+      - "traefik.http.routers.glances-rtr.priority=99"
+      # Middlewares
+      - "traefik.http.routers.glances-rtr-bypass.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.glances-rtr.middlewares=chain-no-auth@file"
+      # HTTP Services
+      - "traefik.http.routers.glances-rtr.service=glances-svc"
+      - "traefik.http.routers.glances-rtr-bypass.service=glances-svc"
+      - "traefik.http.services.glances-svc.loadbalancer.server.port=61208"

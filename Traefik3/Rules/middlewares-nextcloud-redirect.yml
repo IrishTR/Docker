@@ -1,0 +1,9 @@
+http:
+  middlewares:
+### This section redirects requests for Nextcloud calendar and contacts service discovery
+### source: https://docs.nextcloud.com/server/21/admin_manual/issues/general_troubleshooting.html#service-discovery
+    middlewares-nextcloud-redirect:
+      redirectRegex:
+        permanent: true
+        regex: "https://(.*)/.well-known/(card|cal)dav"
+        replacement: "https://${1}/remote.php/dav/"

@@ -1,0 +1,7 @@
+http:
+  middlewares:
+    chain-nextcloud:
+      chain:
+        middlewares:
+          - middlewares-nextcloud-secure-headers
+          - middlewares-nextcloud-redirect

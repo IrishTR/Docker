@@ -1,0 +1,13 @@
+services:
+# Cloudflare Tunnel
+  cloudflared:
+    <<: *common-keys-core
+    image: cloudflare/cloudflared
+    container_name: cloudflared
+    profiles: ["infra", "all"]
+    command: tunnel --config /home/nonroot/.cloudflared/config.yaml --no-autoupdate run
+    environment:
+      <<: *default-tz-puid-pgid
+    volumes:
+      - $DOCKERDIR/cloudflared/config:/home/nonroot/.cloudflared
+      - $DOCKERDIR/cloudflared/cloudflared.log:/var/log/cloudflared.log

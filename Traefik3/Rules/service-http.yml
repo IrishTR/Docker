@@ -1,0 +1,19 @@
+## service-http.yml       
+## Dynamic configuration
+
+http:
+  services:
+    rpizwtheater-svc:
+      loadBalancer:
+        servers:
+        - url: "http://192.168.3.203"
+  
+    rpizwpool-svc:
+      loadBalancer:
+        servers:
+        - url: "http://192.168.3.130"
+
+    hdhomerun-svc:
+      loadBalancer:
+        servers:
+        - url: "http://192.168.1.77"

@@ -1,0 +1,26 @@
+http:
+  middlewares: 
+    middlewares-nextcloud-secure-headers:
+      headers:
+        accessControlMaxAge: 100
+        sslRedirect: true
+        stsSeconds: 63072000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+        hostsProxyHeaders:
+          - "X-Forwarded-Host"
+    ### We will modify this value for Nextcloud to remove the X-Frame-Options error:
+        customFrameOptionsValue: "SAMEORIGIN" #CSP takes care of this but may be needed for organizr.
+        contentTypeNosniff: true
+        browserXssFilter: true
+#       sslForceHost: true # add sslHost to all of the services
+#       sslHost: "example.com"
+        referrerPolicy: "no-referrer"
+    ### While CSP is a good security setting, Nextcloud's Apache server takes care of this for us!
+#       contentSecurityPolicy: "frame-ancestors '*.example.com:*';object-src 'none';script-src 'none';"
+        featurePolicy: "camera 'none'; geolocation 'none'; microphone 'none'; payment 'none'; usb 'none'; vr 'none';"
+        customResponseHeaders:
+    ### Change this to none to remove the Robots error:
+          X-Robots-Tag: "noindex, nofollow"
+          server: ""

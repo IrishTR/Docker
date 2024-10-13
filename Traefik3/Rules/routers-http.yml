@@ -1,0 +1,34 @@
+http:
+  routers:  
+    rpizwtheater-rtr:
+      rule: Host(`rpizwtheater.{{env "DOMAINNAME"}}`)
+      service: rpizwtheater-svc
+      priority: 1000
+      tls:
+        certresolver: dns-cloudflare
+      entryPoints:
+        - websecure
+      middlewares:
+        - chain-oauth
+  
+    rpizwpoolspeaker-rtr:
+      rule: Host(`rpizwpool.{{env "DOMAINNAME"}}`)
+      service: rpizwpool-svc
+      priority: 1000
+      tls:
+        certresolver: dns-cloudflare
+      entryPoints:
+        - websecure
+      middlewares:
+        - chain-oauth
+
+    hdhomerun-rtr:
+      rule: Host(`hdhomerun.{{env "DOMAINNAME"}}`)
+      service: hdhomerun-svc
+      priority: 1000
+      tls:
+        certresolver: dns-cloudflare
+      entryPoints:
+        - websecure
+      middlewares:
+        - chain-no-auth

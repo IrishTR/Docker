@@ -1,0 +1,5 @@
+experimental:
+  plugins:
+    cloudflarewarp:
+      moduleName: "github.com/BetterCorp/cloudflarewarp"
+      version: "v1.3.3"
