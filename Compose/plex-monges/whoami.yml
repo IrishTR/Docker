@@ -1,0 +1,18 @@
+services:
+# WhoAmI - For Testing and Troubleshooting
+  whoami:
+    image: traefik/whoami
+    container_name: whoami
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    profiles: ["infra", "all"]
+    networks:
+      - t3_proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami-rtr.entrypoints=websecure"
+      - "traefik.http.routers.whoami-rtr.rule=Host(`whoami.$DOMAINNAME`)"
+      - "traefik.http.routers.whoami-rtr.middlewares=chain-oauth@file"
+      - "traefik.http.routers.whoami-rtr.service=whoami-svc"
+      - "traefik.http.services.whoami-svc.loadbalancer.server.port=80"

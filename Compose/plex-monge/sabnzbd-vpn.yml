@@ -1,0 +1,50 @@
+services:
+# SABnzbd - Binary newsgrabber (NZB downloader)
+  sabnzbd:
+    <<: *common-keys-apps
+    image: binhex/arch-sabnzbdvpn
+    container_name: sabnzbd
+    profiles: ["media", "all"]
+    ports:
+#      - "$SABNZBD_PORT:8080"
+      - 8090:8090
+      - 8118:8118
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - $DOCKERDIR/sabnzbd:/config
+      - $DOWNLOAD_DIR:/downloads
+      - $DOWNLOAD_DIR/incomplete:/incomplete-downloads
+      - $USERDIR/media:/media
+    environment:
+      <<: *default-tz-puid-pgid
+      UMASK_SET: 000
+      VPN_ENABLED: yes
+      VPN_USER_FILE: /run/secrets/pia_username
+      VPN_PASS_FILE: /run/secrets/pia_password
+      VPN_PROV: pia
+      VPN_CLIENT: openvpn
+      STRICT_PORT_FORWARD: no
+      ENABLE_PRIVOXY: yes
+      LAN_NETWORK: $LOCAL_NETWORK
+      NAME_SERVERS: 1.1.1.1,1.0.0.1
+      VPN_INPUT_PORTS: 1234
+      VPN_OUTPUT_PORTS: 5678
+      DEBUG: false
+    secrets:
+      - pia_username
+      - pia_password
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sabnzbd-rtr.entrypoints=https"
+      - "traefik.http.routers.sabnzbd-rtr.priority=99"
+      - "traefik.http.routers.sabnzbd-rtr.rule=Host(`sabnzbd.$DOMAINNAME`)"
+      - "traefik.http.routers.sabnzbd-rtr.middlewares=chain-oauth@file"
+      - "traefik.http.routers.sabnzbd-rtr.service=sabnzbd-svc"
+      - "traefik.http.services.sabnzbd-svc.loadbalancer.server.port=8080"
+      ## API ROUTER - Allow access to API without auth for 3rd party app access
+      - "traefik.http.routers.sabnzbd-api-rtr.entrypoints=https"
+      - "traefik.http.routers.sabnzbd-api-rtr.priority=100"
+      - "traefik.http.routers.sabnzbd-api-rtr.rule=Host(`sabnzbd.$DOMAINNAME`) && (Headers(`X-Api-Key`, `$SABNZBD_API`) || Query(`apikey=$SABNZBD_API`))"
+      - "traefik.http.routers.sabnzbd-api-rtr.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.sabnzbd-api-rtr.service=sabnzbd-svc"

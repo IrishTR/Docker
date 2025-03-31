@@ -1,0 +1,12 @@
+services:
+# Cloudflare DDNS - Dynamic DNS Updater
+  cloudddns:
+    <<: *common-keys-core
+    image: reddthebamf/cloudflare-ddns:20-alpine3.18 #joshava/cloudflare-ddns
+    container_name: cloudddns
+    profiles: ["infra", "all"]
+    volumes:
+      - $DOCKERDIR/cloudflare-ddns/config.yaml:/app/config.yaml
+    environment:
+      <<: *default-tz-puid-pgid
+      DOMAINNAME: $DOMAINNAME

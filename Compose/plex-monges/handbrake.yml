@@ -1,0 +1,33 @@
+services:
+# Handbrake - Video Conversion (Transcoding and compression)
+  handbrake:
+    <<: *common-keys-apps
+    image: jlesage/handbrake
+    container_name: handbrake
+    profiles: ["avedit", "all"]
+#    ports:
+#      - "$HANDBRAKE_PORT:5800"
+    volumes:
+      - $DOWNLOAD_DIR:/downloads:ro
+      - $USERDIR/media:/media:rw
+      - $DOCKERDIR/handbrake/config:/config:rw
+      - $DOCKERDIR/handbrake/watch:/watch:rw
+      - $DOWNLOAD_DIR/wip_media:/output:rw
+      - $USERDIR/media/storage:/base_storage:rw
+    environment:
+      <<: *default-tz-puid-pgid
+      UMASK: 002
+      KEEP_APP_RUNNING: 1
+      CLEAN_TMP_DIR: 1
+      DISPLAY_WIDTH: 1600
+      DISPLAY_HEIGHT: 960
+      AUTOMATED_CONVERSION_KEEP_SOURCE: 1
+    devices:
+      - /dev/dri:/dev/dri
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.handbrake-rtr.entrypoints=websecure"
+      - "traefik.http.routers.handbrake-rtr.rule=Host(`handbrake.$DOMAINNAME`)"
+      - "traefik.http.routers.handbrake-rtr.middlewares=chain-oauth@file"
+      - "traefik.http.routers.handbrake-rtr.service=handbrake-svc"
+      - "traefik.http.services.handbrake-svc.loadbalancer.server.port=5800"

@@ -1,0 +1,31 @@
+services:
+# MKVToolNix - Video Editing (Remuxing - changing media container while keeping original source quality)
+  mkvtoolnix:
+    <<: *common-keys-apps
+    image: jlesage/mkvtoolnix
+    container_name: mkvtoolnix
+    profiles: ["avedit", "all"]
+#    ports:
+#      - "$MKVTOOLNIX_PORT:5800"
+    volumes:
+      - $USERDIR/media:/media:rw
+      - $DOWNLOAD_DIR:/downloads:rw
+      - $DOCKERDIR/mkvtoolnix/config:/config:rw
+      - $USERDIR/media/storage:/base_storage:rw
+    environment:
+      <<: *default-tz-puid-pgid
+      UMASK: 002
+      KEEP_APP_RUNNING: 1
+      CLEAN_TMP_DIR: 1
+      DISPLAY_WIDTH: 1600
+      DISPLAY_HEIGHT: 960
+      DARK_MODE: 1
+    devices:
+      - /dev/dri:/dev/dri
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mkvtoolnix-rtr.entrypoints=websecure"
+      - "traefik.http.routers.mkvtoolnix-rtr.rule=Host(`mkvtoolnix.$DOMAINNAME`)"
+      - "traefik.http.routers.mkvtoolnix-rtr.middlewares=chain-oauth@file"
+      - "traefik.http.routers.mkvtoolnix-rtr.service=mkvtoolnix-svc"
+      - "traefik.http.services.mkvtoolnix-svc.loadbalancer.server.port=5800"

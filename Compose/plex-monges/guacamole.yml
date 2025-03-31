@@ -1,0 +1,48 @@
+services:
+# Guacamole - Remote desktop, SSH, on Telnet on any HTML5 Browser 
+# Create all databases and tables first
+  guacamole:
+    image: guacamole/guacamole
+    container_name: guacamole
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    profiles: ["infra", "remote"]
+    networks:
+      - t3_proxy
+      - default
+    volumes:
+      - $DOCKERDIR/guacamole/temp:/temp
+#    ports:
+#      - "$GUACAMOLE_PORT:8080"
+    environment:
+      <<: *default-tz-puid-pgid
+      REMOTE_IP_VALUE_ENABLED: true
+      GUACD_HOSTNAME: guacd
+      MYSQL_HOSTNAME: $MARIADB_HOST
+      MYSQL_PORT: $MARIADB_PORT
+      MYSQL_DATABASE_FILE: /run/secrets/guac_db_name
+      MYSQL_USER_FILE: /run/secrets/guac_mysql_user
+      MYSQL_PASSWORD_FILE: /run/secrets/guac_mysql_password
+    secrets:
+      - guac_db_name
+      - guac_mysql_user
+      - guac_mysql_password
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.guacamole-rtr.entrypoints=websecure"
+      - "traefik.http.routers.guacamole-rtr.rule=Host(`guac.$DOMAINNAME`)"
+      - "traefik.http.routers.guacamole-rtr.middlewares=chain-oauth@file,add-guacamole"
+      - "traefik.http.middlewares.add-guacamole.addPrefix.prefix=/guacamole"
+      - "traefik.http.routers.guacamole-rtr.service=guacamole-svc"
+      - "traefik.http.services.guacamole-svc.loadbalancer.server.port=8080"
+
+# Guacamole Daemon - Needed for Guacamole
+  guacd:
+#    <<: *common-keys-core
+    image: guacamole/guacd
+    container_name: guacd
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    profiles: ["infra", "remote"]

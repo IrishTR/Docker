@@ -1,0 +1,67 @@
+services:
+# Homepage - Application Dashboard
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    profiles: ["apps", "all"]
+    networks:
+      - t3_proxy
+      - socket_proxy
+    ports:
+     - "$HOMEPAGE_PORT:3000" 
+    volumes:
+      - $DOCKERDIR/homepage:/app/config
+#      - /var/run/docker.sock:/var/run/docker.sock:ro # pass local proxy
+      - $USERDIR/media:/media
+    environment:
+      DOCKER_HOST: tcp://socket-proxy:2375
+      TZ: $TZ
+      PUID: $PUID
+      PGID: $PGID
+      HOMEPAGE_VAR_DOMAINNAME: $DOMAINNAME
+#      HOMEPAGE_VAR_HDHOMERUN_IP: $HDHOMERUN_IP
+      HOMEPAGE_VAR_SERVER_IP: $SERVER_IP
+      HOMEPAGE_VAR_PLEX_PORT: $PLEX_PORT
+      HOMEPAGE_FILE_GLANCES_PASS: /run/secrets/glances_pass
+      HOMEPAGE_FILE_PLEX_TOKEN: /run/secrets/plex_token
+      HOMEPAGE_FILE_PORTAINER_KEY: /run/secrets/portainer_key
+      HOMEPAGE_FILE_TRANSMISSION_RPC_PASSWORD: /run/secrets/transmission_rpc_password
+      HOMEPAGE_FILE_TRANSMISSION_RPC_USERNAME: /run/secrets/transmission_rpc_username
+      HOMEPAGE_FILE_RADARR_API: /run/secrets/radarr_api
+      HOMEPAGE_FILE_SONARR_API: /run/secrets/sonarr_api
+      HOMEPAGE_FILE_LIDARR_API: /run/secrets/lidarr_api
+      HOMEPAGE_FILE_PROWLARR_API: /run/secrets/prowlarr_api
+      HOMEPAGE_FILE_TAUTULLI_API: /run/secrets/tautulli_api
+      HOMEPAGE_FILE_SABNZBD_API: /run/secrets/sabnzbd_api
+      HOMEPAGE_FILE_BAZARR_API: /run/secrets/bazarr_api
+      HOMEPAGE_FILE_READARR_API: /run/secrets/readarr_api
+      HOMEPAGE_FILE_MYLAR_API: /run/secrets/mylar_api
+    secrets:
+      - portainer_key
+      - glances_pass
+      - plex_token
+      - transmission_rpc_password
+      - transmission_rpc_username
+      - sabnzbd_api
+      - radarr_api
+      - sonarr_api
+      - lidarr_api
+      - prowlarr_api
+      - tautulli_api
+      - bazarr_api
+      - ombi_api
+      - readarr_api
+      - mylar_api
+    labels:
+      - "traefik.enable=true"
+      # HTTP Routers
+      - "traefik.http.routers.homepage-rtr.entrypoints=websecure"
+      - "traefik.http.routers.homepage-rtr.rule=Host(`www.$DOMAINNAME`)"
+      # Middlewares
+      - "traefik.http.routers.homepage-rtr.middlewares=chain-oauth@file"
+      # HTTP Services
+      - "traefik.http.routers.homepage-rtr.service=homepage-svc"
+      - "traefik.http.services.homepage-svc.loadbalancer.server.port=3000"

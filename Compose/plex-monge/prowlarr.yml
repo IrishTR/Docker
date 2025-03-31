@@ -1,0 +1,30 @@
+services:
+  # Prowlarr - Torrent proxy
+  prowlarr:
+    <<: *common-keys-apps
+    image: linuxserver/prowlarr:develop
+    container_name: prowlarr
+    profiles: ["media", "all"]
+    environment:
+      <<: *default-tz-puid-pgid
+    volumes:
+      - $DOCKERDIR/prowlarr/data:/config
+    ports:
+      - $PROWLARR_PORT:9696
+    labels:
+      - "traefik.enable=true"
+      # HTTP Routers Auth Bypass
+      - "traefik.http.routers.prowlarr-rtr-bypass.entrypoints=websecure"
+      - "traefik.http.routers.prowlarr-rtr-bypass.rule=Host(`prowlarr.$DOMAINNAME`) && (Header(`X-Api-Key`, `$PROWLARR_API`) || Query(`apikey`, `$PROWLARR_API`))"
+      - "traefik.http.routers.prowlarr-rtr-bypass.priority=100"
+      # HTTP Routers Auth
+      - "traefik.http.routers.prowlarr-rtr.entrypoints=websecure"
+      - "traefik.http.routers.prowlarr-rtr.rule=Host(`prowlarr.$DOMAINNAME`)"
+      - "traefik.http.routers.prowlarr-rtr.priority=99"
+      # Middlewares
+      - "traefik.http.routers.prowlarr-rtr-bypass.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.prowlarr-rtr.middlewares=chain-oauth@file"
+      # HTTP Services
+      - "traefik.http.routers.prowlarr-rtr.service=prowlarr-svc"
+      - "traefik.http.routers.prowlarr-rtr-bypass.service=prowlarr-svc"
+      - "traefik.http.services.prowlarr-svc.loadbalancer.server.port=9696"

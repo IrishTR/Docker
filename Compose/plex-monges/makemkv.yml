@@ -1,0 +1,31 @@
+services:
+# MakeMKV - Video Editing (Ripping from Disks)
+  makemkv:
+    <<: *common-keys-apps
+    image: jlesage/makemkv
+    container_name: makemkv
+    profiles: ["avedit", "all"]
+#    ports:
+#      - "$MAKEMKV_PORT:5800"
+    volumes:
+      - $USERDIR/media:/media:rw
+      - $DOWNLOAD_DIR:/downloads:rw
+      - $DOCKERDIR/makemkv/config:/config:rw
+      - $USERDIR/media/storage:/storage:rw
+      - /mnt/cdrom:/mnt/cdrom
+    environment:
+      <<: *default-tz-puid-pgid
+      UMASK: 002
+      KEEP_APP_RUNNING: 1
+      CLEAN_TMP_DIR: 1
+      DISPLAY_WIDTH: 1600
+      DISPLAY_HEIGHT: 960
+    devices:
+      - /dev/dri:/dev/dri
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.makemkv-rtr.entrypoints=websecure"
+      - "traefik.http.routers.makemkv-rtr.rule=Host(`makemkv.$DOMAINNAME`)"
+      - "traefik.http.routers.makemkv-rtr.middlewares=chain-oauth@file"
+      - "traefik.http.routers.makemkv-rtr.service=makemkv-svc"
+      - "traefik.http.services.makemkv-svc.loadbalancer.server.port=5800"

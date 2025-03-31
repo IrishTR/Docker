@@ -1,0 +1,27 @@
+services:
+# Book Manager and Automation
+  readarr:
+    <<: *common-keys-apps
+    image: linuxserver/readarr:nightly
+    container_name: readarr
+    profiles: ["media", "all"]
+    volumes:
+      - $DOCKERDIR/readarr/config:/config:Z
+      - $DOWNLOAD_DIR:/downloads
+      - $USERDIR/media/books:/books
+    environment:
+      <<: *default-tz-puid-pgid
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.readarr-rtr.entrypoints=https"
+      - "traefik.http.routers.readarr-rtr.priority=99"
+      - "traefik.http.routers.readarr-rtr.rule=Host(`readarr.$DOMAINNAME`)"
+      - "traefik.http.routers.readarr-rtr.middlewares=chain-oauth@file"
+      - "traefik.http.routers.readarr-rtr.service=readarr-svc"
+      - "traefik.http.services.readarr-svc.loadbalancer.server.port=8787"
+      # API ROUTER - Allow access to API without auth for 3rd party app access
+      - "traefik.http.routers.readarr-api-rtr.entrypoints=https"
+      - "traefik.http.routers.readarr-api-rtr.priority=100"
+      - "traefik.http.routers.readarr-api-rtr.rule=Host(`READARR.$DOMAINNAME`) && (Headers(`X-Api-Key`, `$READARR_API`) || Query(`apikey=$READARR_API`))"
+      - "traefik.http.routers.readarr-api-rtr.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.readarr-api-rtr.service=readarr-svc"

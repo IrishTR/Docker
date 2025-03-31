@@ -1,0 +1,83 @@
+services:
+# TransmissionBT - Torrent Downloader
+# ONLY ACCESSIBLE THROUGH https://domain.com/transmission/web/ if using PathPrefix
+  transmission:
+    <<: *common-keys-apps
+    image: haugene/transmission-openvpn
+    container_name: transmission
+    profiles: ["media", "all"]
+    networks:
+      t3_proxy:
+        ipv4_address: $TRANSMISSION_IP
+#    ports:
+#      - "$TRANSMISSION_PORT:9091"
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - $DOCKERDIR/transmission/data:/data
+      - $DOCKERDIR/transmission/config:/config
+      - $DOWNLOAD_DIR:/downloads
+    environment:
+      <<: *default-tz-puid-pgid
+      # OPENVPN_PROVIDER: PIA
+      # OPENVPN_USERNAME_FILE: /run/secrets/pia_username
+      # OPENVPN_PASSWORD_FILE: /run/secrets/pia_password
+      # OPENVPN_CONFIG: "argentina"
+      OPENVPN_PROVIDER: privado
+      OPENVPN_USERNAME_FILE: /run/secrets/openvpn_user
+      OPENVPN_PASSWORD_FILE: /run/secrets/openvpn_password
+      OPENVPN_CONFIG: Netherlands
+      OPENVPN_OPTS: --inactive 3600 --ping 10 --ping-exit 60
+      LOCAL_NETWORK: $LOCAL_NETWORK
+      UMASK_SET: 002
+#      DISABLE_PORT_UPDATER: "true"
+#      TRANSMISSION_PEER_PORT: 51413
+      TRANSMISSION_RPC_AUTHENTICATION_REQUIRED: "false"
+      TRANSMISSION_RPC_HOST_WHITELIST: transmission,transmission.$DOMAINNAME
+      TRANSMISSION_RPC_WHITELIST: $IPWHITELIST
+      TRANSMISSION_UMASK: 002
+      TRANSMISSION_RATIO_LIMIT: 0
+      TRANSMISSION_RATIO_LIMIT_ENABLED: "true"
+      TRANSMISSION_IDLE_SEEDING_LIMIT: 5
+      TRANSMISSION_IDLE_SEEDING_LIMIT_ENABLED: "true"
+#      TRANSMISSION_ALT_SPEED_DOWN: 2000
+#      TRANSMISSION_ALT_SPEED_ENABLED: "true"
+#      TRANSMISSION_ALT_SPEED_UP: 15
+#      TRANSMISSION_SPEED_LIMIT_DOWN: 6000
+#      TRANSMISSION_SPEED_LIMIT_DOWN_ENABLED: "true"
+      TRANSMISSION_SPEED_LIMIT_UP: 200
+      TRANSMISSION_SPEED_LIMIT_UP_ENABLED: "true"
+#      TRANSMISSION_BLOCKLIST_URL: "http://john.bitsurge.net/public/biglist.p2p.gz"
+      TRANSMISSION_PEER_LIMIT_GLOBAL: 1000
+      TRANSMISSION_PEER_LIMIT_PER_TORRENT: 100
+      TRANSMISSION_DOWNLOAD_QUEUE_SIZE: 10
+      TRANSMISSION_DOWNLOAD_QUEUE_ENABLED: "true"
+      TRANSMISSION_QUEUE_STALLED_MINUTES: 30
+      TRANSMISSION_QUEUE_STALLED_ENABLED: "true"
+      TRANSMISSION_INCOMPLETE_DIR: "/downloads/incomplete/transmission"
+      TRANSMISSION_INCOMPLETE_DIR_ENABLED: "true"
+      TRANSMISSION_WATCH_DIR: "/downloads"
+      TRANSMISSION_WATCH_DIR_ENABLED: "true"
+      TRANSMISSION_DOWNLOAD_DIR: "/downloads/completed/transmission"
+      TRANSMISSION_RPC_USERNAME_FILE: /run/secrets/transmission_rpc_username
+      TRANSMISSION_RPC_PASSWORD_FILE: /run/secrets/transmission_rpc_password
+    secrets:
+      - source: privadovpn_user
+        target: /run/secrets/openvpn_user
+      - source: privadovpn_password
+        target: /run/secrets/openvpn_password
+      - transmission_rpc_username
+      - transmission_rpc_password
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.transmission-vpn-rtr.entrypoints=websecure"
+      - "traefik.http.routers.transmission-vpn-rtr.rule=Host(`transmission.$DOMAINNAME`)"
+      - "traefik.http.routers.transmission-vpn-rtr.middlewares=chain-oauth@file"
+      - "traefik.http.routers.transmission-vpn-rtr.service=transmission-vpn-svc"
+      - "traefik.http.services.transmission-vpn-svc.loadbalancer.server.port=9091"

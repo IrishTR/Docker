@@ -1,0 +1,48 @@
+services:
+# Plex Media Server
+  plex:
+    <<: *common-keys-apps
+    image: linuxserver/plex
+    container_name: plex
+    profiles: ["media", "all"]
+    # runtime: nvidia
+    environment:
+      <<: *default-tz-puid-pgid
+      FILE__PLEX_CLAIM: /run/secrets/plex_claim
+      ADVERTISE_IP: http://$SERVER_IP:$PLEX_PORT/,https://plex.$DOMAINNAME/
+      ALLOWED_NETWORKS: $IPWHITELIST
+      VERSION: docker
+      # NVIDIA_VISIBLE_DEVICES: all
+      # NVIDIA_DRIVER_CAPABILITIES: compute,video,utility
+    devices:
+      - /dev/dri:/dev/dri
+    secrets:
+      - plex_claim
+    hostname: plex
+    networks:
+      t3_proxy:
+    ports:
+      - $PLEX_PORT:32400/tcp
+      - 3005:3005/tcp
+      - 8324:8324/tcp
+      - 32469:32469/tcp
+      - 1900:1900/udp
+      - 5351:5351/udp
+      - 5353:5353/udp
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+      - 33400:33400/tcp
+    volumes:
+      - $DOCKERDIR/Plex/preroll:/preroll
+      - $USERDIR/media:/media
+      - $DOCKERDIR/Plex/DB:/config
+      - /dev/shm:/transcode
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.plex-rtr.entrypoints=websecure"
+      - "traefik.http.routers.plex-rtr.rule=Host(`plex.$DOMAINNAME`)"
+      - "traefik.http.routers.plex-rtr.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.plex-rtr.service=plex-svc"
+      - "traefik.http.services.plex-svc.loadbalancer.server.port=32400"

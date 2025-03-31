@@ -1,0 +1,29 @@
+services:
+# Mylar - Comic Book management
+  mylar:
+    <<: *common-keys-apps
+    image: linuxserver/mylar3
+    container_name: mylar
+    profiles: ["media", "all"]
+#    ports:
+#      - "$MYLAR_PORT:8090"
+    volumes:
+      - $DOCKERDIR/mylar:/config
+      - $DOWNLOAD_DIR:/downloads
+      - $USERDIR/media/comics:/comics
+    environment:
+      <<: *default-tz-puid-pgid
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mylar-rtr.entrypoints=https"
+      - "traefik.http.routers.mylar-rtr.priority=99"
+      - "traefik.http.routers.mylar-rtr.rule=Host(`mylar.$DOMAINNAME`)"
+      - "traefik.http.routers.mylar-rtr.middlewares=chain-oauth@file"
+      - "traefik.http.routers.mylar-rtr.service=mylar-svc"
+      - "traefik.http.services.mylar-svc.loadbalancer.server.port=8090"
+      # API ROUTER - Allow access to API without auth for 3rd party app access
+      - "traefik.http.routers.mylar-api-rtr.entrypoints=https"
+      - "traefik.http.routers.mylar-api-rtr.priority=100"
+      - "traefik.http.routers.mylar-api-rtr.rule=Host(`mylar.$DOMAINNAME`) && (Headers(`X-Api-Key`, `$MYLAR_API`) || Query(`apikey=$MYLAR_API`))"
+      - "traefik.http.routers.mylar-api-rtr.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.mylar-api-rtr.service=mylar-svc"
