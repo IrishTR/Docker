@@ -1,0 +1,14 @@
+services:
+#Plex-Sync - For Syncing watched status between plex servers 
+  plex-sync:
+    <<: *common-keys-apps
+    image: reddthebamf/plex-sync:npm9.8.1
+    container_name: plex-sync
+    profiles: ["media", "all"]
+    environment:
+      <<: *default-tz-puid-pgid
+      PLEX_TOKEN: $PLEX_TOKEN
+      INITIAL_RUN: "true"
+      # DRY_RUN: 0
+      CRON_SCHEDULE: '*/120 * * * *'
+      SECTION_MAPS: $PLEXSERVER1/$PLEXSERVER1_MOVIES $PLEXSERVER2/$PLEXSERVER2_MOVIES | $PLEXSERVER1/$PLEXSERVER1_TVSHOWS $PLEXSERVER2/$PLEXSERVER2_TVSHOWS

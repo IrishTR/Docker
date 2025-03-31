@@ -1,0 +1,17 @@
+services:
+# WatchTower - Automatic Docker Container Updates
+  watchtower:
+    <<: *common-keys-core
+    image: containrrr/watchtower
+    container_name: watchtower
+    profiles: ["infra", "all"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # Use Docker Socket Proxy and comment this line for improved security.
+    environment:
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_REMOVE_VOLUMES: "true"
+      WATCHTOWER_INCLUDE_STOPPED: "true"
+      WATCHTOWER_NO_STARTUP_MESSAGE: "false"
+      WATCHTOWER_SCHEDULE: "0 30 12 * * *" # Everyday at 12:30
+      # DOCKER_HOST: tcp://socket-proxy:2375 # Use this if you have Socket Proxy enabled.
+      DOCKER_API_VERSION: "1.45"

@@ -1,0 +1,17 @@
+services:
+# Traefik Certs Dumper - Extract LetsEncrypt Certificates - Traefik2 Compatible
+ certdumper:
+   <<: *common-keys-core
+   image: humenius/traefik-certs-dumper
+   container_name: traefik_certdumper
+   profiles: ["media", "all"]
+#    command: --restart-containers container1,container2,container3
+   volumes:
+     - $DOCKERDIR/traefik3/acme:/traefik:ro
+     - $DOCKERDIR/shared/certs:/output:rw
+#    - /var/run/docker.sock:/var/run/docker.sock:ro # only needed if restarting containers
+   environment:
+     <<: *default-tz-puid-pgid
+     DOMAIN: $DOMAINNAME
+     OVERRIDE_UID: $PUID
+     OVERRIDE_GID: $PGID

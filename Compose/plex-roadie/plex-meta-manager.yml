@@ -1,0 +1,44 @@
+services:
+# Plex Meta Manager - Automatic Metadata Manager for Plex
+  plexmm:
+    <<: *common-keys-apps
+    image: linuxserver/kometa
+    container_name: plexmm
+    profiles: ["media", "all"]
+    depends_on:
+      - plex
+    environment:
+      <<: *default-tz-puid-pgid
+      KOMETA_CONFIG: /config/config.yml #optional
+      KOMETA_TIMES: 05:00 #optional
+      # KOMETA_RUN: "True" #optional
+      KOMETA_TEST: "False" #optional
+      KOMETA_NO_MISSING: "False" #optional
+      KOMETA_PLEXTOKEN: $PLEX_TOKEN
+      KOMETA_TRAKTCLIENTID: $TRAKT_CLIENTID
+      KOMETA_TRAKTCLIENTSECRET: $TRAKT_CLIENTSECRET
+      KOMETA_TRAKTPIN: $TRAKT_PIN
+      KOMETA_GITHUBTOKEN: $GITHUB_TOKEN
+      KOMETA_RADARRAPI: $RADARR_API
+      KOMETA_SONARRAPI: $SONARR_API
+      KOMETA_MDBLISTAPI: $MDBLIST_API
+      KOMETA_OMDBAPI: $OMDB_API
+      KOMETA_TMDBAPI: $TMDB_API
+      KOMETA_TAUTULLIAPI: $TAUTULLI_API
+      KOMETA_SERVERIP: $SERVER_IP
+      KOMETA_PLEXPORT: $PLEX_PORT
+      KOMETA_NOTIFIARRAPI: $NOTIFIARR_API
+    volumes:
+      - $DOCKERDIR/plex-meta-manager/config:/config:rw
+    secrets:
+      - plex_token
+      - trakt_clientid
+      - trakt_clientsecret
+      - trakt_pin
+      - github_token
+      - sonarr_api
+      - radarr_api
+      - mdblist_api
+      - omdb_api
+      - tmdb_api
+      - tautulli_api

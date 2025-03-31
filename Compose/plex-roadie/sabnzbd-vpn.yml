@@ -1,0 +1,38 @@
+services:
+# SABnzbd - Binary newsgrabber (NZB downloader)
+  sabnzbd:
+    <<: *common-keys-apps 
+    image: binhex/arch-sabnzbdvpn
+    container_name: sabnzbd
+    profiles: ["media", "all"]
+    ports:
+      - "$SABNZBD_PORT:8080"
+      - 8090:8090
+      - 8118:8118
+    cap_add:
+      - NET_ADMIN
+    # devices:
+    #   - /dev/net/tun
+    # dns:
+    #   - 1.1.1.1
+    #   - 1.0.0.1
+    volumes:
+      - $DOCKERDIR/sabnzbd:/config
+      - $DOWNLOAD_DIR:/downloads
+      - $DOWNLOAD_DIR/incomplete:/incomplete
+      - $USERDIR/media:/media
+    environment:
+      <<: *default-tz-puid-pgid
+      UMASK_SET: 000
+      VPN_ENABLED: yes
+      VPN_USER: $PIA_USERNAME
+      VPN_PASS: $PIA_PASSWORD
+      VPN_PROV: pia
+      VPN_CLIENT: openvpn
+      STRICT_PORT_FORWARD: no
+      ENABLE_PRIVOXY: yes
+      LAN_NETWORK: $LOCAL_NETWORK
+      NAME_SERVERS: 1.1.1.1,1.0.0.1
+      VPN_INPUT_PORTS: 1234
+      VPN_OUTPUT_PORTS: 5678
+      DEBUG: false

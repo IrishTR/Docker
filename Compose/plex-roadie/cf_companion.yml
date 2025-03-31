@@ -1,0 +1,33 @@
+services:
+# Cloudflared Companion Updater
+  cf_companion:
+    <<: *common-keys-core
+    image: ghcr.io/tiredofit/docker-traefik-cloudflare-companion:latest
+    container_name: cf_companion
+    profiles: ["infra", "all"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+#      <<: *default-tz-puid-pgid
+      - TIMEZONE=${TZ}
+      - LOG_TYPE=CONSOLE
+      - LOG_LEVEL=INFO
+      - TRAEFIK_VERSION=3
+      - CF_TOKEN_FILE=/run/secres/cf_token
+      - RC_TYPE=CNAME
+      - TARGET_DOMAIN=${DOMAINNAME}
+      - REFRESH_ENTRIES=TRUE
+      - DOCKER_SWARM_MODE=FALSE
+      - ENABLE_TRAEFIK_POLL=TRUE
+      - TRAEFIK_POLL_URL=https://traefik2.$DOMAINNAME/api
+      - TRAEFIK_FILTER_LABEL=traefik.constraint
+      - TRAEFIK_FILTER=proxy-public
+      - DOMAIN1=${DOMAINNAME}
+      - DOMAIN1_ZONE_ID_FILE=cf_zone_id
+      - DOMAIN1_PROXIED=TRUE
+    restart: always
+    networks:
+      - t3_proxy
+    secrets:
+      - cf_token
+      - cf_zone_id

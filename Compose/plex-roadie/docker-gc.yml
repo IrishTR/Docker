@@ -1,0 +1,19 @@
+services:
+# Docker-GC - Automatic Docker Garbage Collection 
+# Create docker-gc-exclude file
+  docker-gc:
+    <<: *common-keys-core
+    image: clockworksoul/docker-gc-cron
+    container_name: docker-gc
+    profiles: ["infra", "all"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - $DOCKERDIR/docker-gc/docker-gc-exclude:/etc/docker-gc-exclude
+    environment:
+     <<: *default-tz-puid-pgid
+     CRON: 0 0 0 * * ?
+     FORCE_IMAGE_REMOVAL: 1
+     FORCE_CONTAINER_REMOVAL: 0
+     GRACE_PERIOD_SECONDS: 604800
+     DRY_RUN: 0
+     CLEAN_UP_VOLUMES: 1

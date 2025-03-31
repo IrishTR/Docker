@@ -1,0 +1,21 @@
+services:
+# MariaDB - MySQL Database
+  mariadb:
+    image: linuxserver/mariadb
+    container_name: mariadb
+    hostname: mariadb
+    networks:
+      - default
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    profiles: ["infra", "remote", "all"]
+#    ports:
+#      - "$MARIADB_PORT:3306"
+    volumes:
+      - $DOCKERDIR/mariadb/data:/config
+    environment:
+      <<: *default-tz-puid-pgid
+      FILE__MYSQL_ROOT_PASSWORD: /run/secrets/mysql_root_password
+    secrets:
+      - mysql_root_password

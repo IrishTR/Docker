@@ -1,0 +1,25 @@
+services:
+# WireGuard VPN Server
+  wireguard:
+    <<: *common-keys-core
+    image: linuxserver/wireguard
+    container_name: wireguard
+    profiles: ["infra", "all"]
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      <<: *default-tz-puid-pgid
+#      SERVERURL: vpn2.$DOMAINNAME
+#      SERVERPORT: 51820
+#      PEERS: $WIREGUARD_PEER1, $WIREGUARD_PEER2 # number of peers/names
+#      PEERDNS: auto #optional
+      ALLOWEDIPS: $WIREGUARD_ALLOWEDIPS
+#      INTERNAL_SUBNET: 192.168.10.0
+    volumes:
+      - $DOCKERDIR/wireguard/config:/config
+      - $DOCKERDIR/wireguard/modules:/lib/modules
+#    ports:
+#      - $WIREGUARD_VPN_PORT:51820/udp
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
