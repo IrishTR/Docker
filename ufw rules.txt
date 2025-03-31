@@ -1,0 +1,27 @@
+sudo ufw allow from 192.168.1.0/24 to any port 8324 proto tcp comment 'Plex controlling for Roku via Plex Companion'
+sudo ufw allow from 192.168.1.0/24 to any port 3005 proto tcp comment 'Plex controlling for via Plex Companion'
+sudo ufw allow from 192.168.1.0/24 to any port 32469 proto tcp comment 'Plex access to DNLA Server'
+sudo ufw allow from 192.168.1.0/24 to any port 1900 proto udp comment 'Plex access to DNLA Server'
+sudo ufw allow from 192.168.1.0/24 to any port 32410 proto udp comment 'Plex current GDM network discovery'
+sudo ufw allow from 192.168.1.0/24 to any port 32412:32414 proto udp comment 'Plex current GDM network discovery'
+sudo ufw allow from 192.168.1.0/24 to any port 5353 proto udp comment 'Plex older Bonjour/Avahi network discovery'
+sudo ufw allow log from 192.168.90.0/24 to any port 5351 proto udp comment 'Plex older Bonjour/Avahi network discovery'
+
+sudo ufw allow from 192.168.3.0/24 to any port 32400 proto tcp comment 'Plex access to server IOT LAN'
+sudo ufw allow log from 192.168.90.0/24 to any port 32400 proto tcp comment 'Plex access to server Docker LAN'
+
+sudo ufw allow log from 192.168.3.0/24 to any port 5004 comment 'HDHR-AC4 access IOT LAN'
+sudo ufw allow log from 192.168.90.0/24 to any port 8082 comment 'HDHR-AC4 access Docker LAN'
+
+sudo ufw allow log from 192.168.3.0/24 to any port 34400 comment 'Threadfin access IOT LAN'
+sudo ufw allow log from 192.168.90.0/24 to any port 34400 comment 'Threadfin access Docker LAN'
+
+sudo ufw allow log from 172.18.0.0/24 to any app OpenSSH comment 'OpenSSH for Guacamole'
+sudo ufw allow log from 192.168.90.0/24 to any app OpenSSH comment 'OpenSSH for Docker LAN'
+sudo ufw allow log from 192.168.2.0/24 to any app OpenSSH comment 'OpenSSH for Wireguard Client'
+
+sudo ufw allow log from 192.168.2.0/24 to any app Samba comment 'Samba for Wireguard Client'
+sudo ufw allow log from any to any port 51820 proto udp comment 'Wireguard Server'
+sudo ufw allow http comment 'Traefik HTTP access'
+sudo ufw allow https comment 'Traefik HTTPS access'
+sudo ufw allow log from 192.168.1.0/24 comment 'Main LAN Access'
