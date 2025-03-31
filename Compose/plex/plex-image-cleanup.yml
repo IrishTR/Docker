@@ -1,5 +1,5 @@
 services:
-# Plex Image Cleanup
+#Plex Image Cleanup
   plexic:
     <<: *common-keys-apps
     image: meisnate12/plex-image-cleanup
@@ -13,7 +13,7 @@ services:
       MODE: remove
       SCHEDULE: "07:00|weekly(sunday)"
       PLEX_URL: http://$SERVER_IP:$PLEX_PORT
-      PLEX_TOKEN: $PLEX_TOKEN
+      PLEX_TOKEN: /run/secrets/plex_token
       #DISCORD=https://discord.com/api/webhooks/###################/####################################################################
       TIMEOUT: 600
       SLEEP: 60
@@ -26,6 +26,8 @@ services:
       OPTIMIZE_DB: True
       TRACE: False
       LOG_REQUESTS: True
+    secrets:
+      - plex_token
     volumes:
       - $DOCKERDIR/plex-image-cleanup/config:/config
       - $DOCKERDIR/Plex/DB/Library/Application Support/Plex Media Server:/plex

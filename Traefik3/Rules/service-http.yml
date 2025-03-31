@@ -11,9 +11,19 @@ http:
     rpizwpool-svc:
       loadBalancer:
         servers:
-        - url: "http://192.168.3.130"
+        - url: "http://192.168.3.144"
 
     hdhomerun-svc:
       loadBalancer:
         servers:
-        - url: "http://192.168.1.77"
+        - url: "http://192.168.1.195"
+
+    batocerapi5-svc:
+      loadBalancer:
+        servers:
+        - url: "http://192.168.1.198"
+
+    batocerapi4b-svc:
+      loadBalancer:
+        servers:
+        - url: "http://192.168.1.197"

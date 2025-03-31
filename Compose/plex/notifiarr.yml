@@ -37,8 +37,8 @@ services:
       DN_SABNZBD_0_NAME: Sabnzbd.$DOMAINNAME
       DN_SABNZBD_0_URL: http://sabnzbd:8080
       DN_SABNZBD_0_API_KEY: $SABNZBD_API
-      DN_TRANSMISSION_0_NAME: Transmission.$DOMAINNAME
-      DN_TRANSMISSION_0_URL: http://transmission:9091
+      #DN_TRANSMISSION_0_NAME: Transmission.$DOMAINNAME
+      #DN_TRANSMISSION_0_URL: http://transmission:9091
       #DN_TRANSMISSION_0_USERNAME: 
       #DN_TRANSMISSION_0_PASSWORD: 
       DN_LIDARR_1_NAME: Lidarr2.$DOMAINNAME
@@ -75,6 +75,24 @@ services:
       DN_SABNZBD_2_NAME: Sabnzbd.$DOMAINNAME2
       DN_SABNZBD_2_URL: https://sabnzbd.$DOMAINNAME2
       DN_SABNZBD_2_API_KEY: $SABNZBD_API
+      DN_RADARR_3_NAME: Radarr.$DOMAINNAME3
+      DN_RADARR_3_URL: https://radarr.$DOMAINNAME3/radarr
+      DN_RADARR_3_API_KEY: $RADARR2_API
+      DN_SONARR_3_NAME: Sonarr.$DOMAINNAME3
+      DN_SONARR_3_URL: https://sonarr.$DOMAINNAME3/sonarr
+      DN_SONARR_3_API_KEY: $SONARR2_API
+      DN_LIDARR_3_NAME: Lidarr.$DOMAINNAME3
+      DN_LIDARR_3_URL: https://lidarr.$DOMAINNAME3/lidarr
+      DN_LIDARR_3_API_KEY: $LIDARR2_API
+      DN_SABNZBD_3_NAME: Sabnzbd.$DOMAINNAME3
+      DN_SABNZBD_3_URL: https://sabnzbd.$DOMAINNAME3
+      DN_SABNZBD_3_API_KEY: $SABNZBD2_API
+      DN_PROWLARR_3_NAME: Prowlarr.$DOMAINNAME3
+      DN_PROWLARR_3_URL: https://prowlarr.$DOMAINNAME3
+      DN_PROWLARR_3_API_KEY: $PROWLARR2_API
+      DN_READARR_1_NAME: Readarr.$DOMAINNAME3
+      DN_READARR_1_URL: https://readarr.$DOMAINNAME3/readarr
+      DN_READARR_1_API_KEY: $READARR2_API
       DN_PLEX_URL: https://plex.$DOMAINNAME
 #      DN_PLEX_TOKEN_FILE: /run/secrets/plex_token #$PLEX_TOKEN
       DN_TAUTULLI_NAME: Tautulli.$DOMAINNAME

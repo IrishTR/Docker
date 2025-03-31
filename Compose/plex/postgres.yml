@@ -1,9 +1,13 @@
 services:
 # Postgres - Database for TeslaMate
   postgres:
-    <<: *common-keys-core
     image: postgres:15
     container_name: postgres
+    networks:
+      - default
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
     profiles: ["infra", "all"]
     volumes:
       - $DOCKERDIR/postgres:/var/lib/postgresql/data

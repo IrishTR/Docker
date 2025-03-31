@@ -1,32 +1,24 @@
 services:
-  # Lidarr - Music Management
-  # Set url_base in lidarr settings if using PathPrefix
+# Lidarr - Music Management
   lidarr:
-    image: lscr.io/linuxserver/lidarr:latest
+    <<: *common-keys-apps
+    image: linuxserver/lidarr
     container_name: lidarr
-    security_opt:
-      - no-new-privileges:true
-    restart: "no"
-    profiles: ["media","arrs", "all"]
-    networks:
-      - t3_proxy
-    ports:
-      - "8686:8686"
+    profiles: ["media", "all"]
+#    ports:
+#      - "$LIDARR_PORT:8686"
     volumes:
       - $DOCKERDIR/lidarr:/config
       - $DOWNLOAD_DIR:/downloads
       - $USERDIR/media/music:/music
       - "/etc/localtime:/etc/localtime:ro"
     environment:
-      TZ: $TZ
-      PUID: $PUID
-      PGID: $PGID
+      <<: *default-tz-puid-pgid
     labels:
       - "traefik.enable=true"
       # HTTP Routers Auth Bypass
       - "traefik.http.routers.lidarr-rtr-bypass.entrypoints=websecure"
       - "traefik.http.routers.lidarr-rtr-bypass.rule=Host(`lidarr.$DOMAINNAME`) && (Header(`X-Api-Key`, `$LIDARR_API`) || Query(`apikey`, `$LIDARR_API`))"
-      #- "traefik.http.routers.lidarr-rtr-bypass.rule=Host(`lidarr.$DOMAINNAME`) && Header(`traefik-auth-bypass-key`, `$TRAEFIK_AUTH_BYPASS_KEY`)" # Bypass Auth for LunaSea on iOS
       - "traefik.http.routers.lidarr-rtr-bypass.priority=100"
       # HTTP Routers Auth
       - "traefik.http.routers.lidarr-rtr.entrypoints=websecure"

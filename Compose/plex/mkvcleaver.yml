@@ -24,7 +24,7 @@ services:
       - /dev/dri:/dev/dri
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mkvcleaver-rtr.entrypoints=https"
+      - "traefik.http.routers.mkvcleaver-rtr.entrypoints=websecure"
       - "traefik.http.routers.mkvcleaver-rtr.rule=Host(`mkvcleaver.$DOMAINNAME`)"
       - "traefik.http.routers.mkvcleaver-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.mkvcleaver-rtr.service=mkvcleaver-svc"

@@ -29,3 +29,26 @@ services:
       # HTTP Services
       - "traefik.http.routers.portainer-rtr.service=portainer-svc"
       - "traefik.http.services.portainer-svc.loadbalancer.server.port=9000"
+
+
+# Portainer - WebUI for Containers
+  portainer:
+    <<: *common-keys-core
+    image: portainer/portainer-ce
+    container_name: portainer
+    profiles: ["infra", "all"]
+    command: -H unix:///var/run/docker.sock
+#    ports:
+#      - "$PORTAINER_PORT:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - $DOCKERDIR/portainer/data:/data
+    environment:
+      <<: *default-tz-puid-pgid
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer-rtr.entrypoints=websecure"
+      - "traefik.http.routers.portainer-rtr.rule=Host(`portainer.$DOMAINNAME`)"
+      - "traefik.http.routers.portainer-rtr.middlewares=chain-oauth@file"
+      - "traefik.http.routers.portainer-rtr.service=portainer-svc"
+      - "traefik.http.services.portainer-svc.loadbalancer.server.port=9000"

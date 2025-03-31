@@ -1,28 +1,30 @@
 services:
 # Gluetun - VPN Client for Docker Containers and More
 # Gluetun only for use by torrent clients + on demand lan devices.
-# Arr apps do not need VPN (not recommended), unless you have ISP/country restrictions.
   gluetun:
     image: qmcgaw/gluetun
     container_name: gluetun
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
-    profiles: ["infra", "all"]
+    profiles: ["vpn", "downloads"]
     networks:
       - t3_proxy
     cap_add:
       - NET_ADMIN
     devices:
       - /dev/net/tun
+    dns:
+      - 1.1.1.1
+      - 1.0.0.1
     ports:
       - "8081:8080" # Exposing qBittorrent through Docker Host LAN IP
-      - "31801:31801"
     # #   - 8888:8888/tcp # HTTP proxy
     # #   - 8388:8388/tcp # Shadowsocks
     # #   - 8388:8388/udp # Shadowsocks
     volumes:
       - $DOCKERDIR/gluetun:/gluetun
+      - $DOCKERDIR/gluetun/portforward:/tmp/gluetun/
     environment:
       TZ: $TZ
       # Wireguard
@@ -34,11 +36,13 @@ services:
       # OpenVPN
       VPN_SERVICE_PROVIDER: private internet access
       VPN_TYPE: openvpn
-      PRIVATE_INTERNET_ACCESS_VPN_PORT_FORWARDING: on
-      PRIVATE_INTERNET_ACCESS_VPN_PRIVATE_INTERNET_ACCESS_VPN_PORT_FORWARDING_STATUS_FILE: /gluetun/forwarded_port
+      VPN_PORT_FORWARDING: on
+      #PRIVATE_INTERNET_ACCESS_VPN_PRIVATE_INTERNET_ACCESS_VPN_PORT_FORWARDING_STATUS_FILE: /gluetun/forwarded_port
+      VPN_PORT_FORWARDING_STATUS_FILE: /tmp/gluetun/forwarded_port
       VPN_PORT_FORWARDING_USERNAME_SECRETFILE: /run/secrets/openvpn_user
       VPN_PORT_FORWARDING_PASSWORD_SECRETFILE: /run/secrets/openvpn_password
-      OPENVPN_CONFIG: "US Dallas"
+      OPENVPN_CONFIG: Argentina
+#      DNS_SERVER: 1.0.0.1, 1.1.1.1
       OPENVPN_OPTS: --inactive 3600 --ping 10 --ping-exit 60
     secrets:
       - source: pia_username

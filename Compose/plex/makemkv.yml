@@ -24,7 +24,7 @@ services:
       - /dev/dri:/dev/dri
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.makemkv-rtr.entrypoints=https"
+      - "traefik.http.routers.makemkv-rtr.entrypoints=websecure"
       - "traefik.http.routers.makemkv-rtr.rule=Host(`makemkv.$DOMAINNAME`)"
       - "traefik.http.routers.makemkv-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.makemkv-rtr.service=makemkv-svc"

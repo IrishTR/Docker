@@ -1,7 +1,7 @@
 services:
 # WatchTower - Automatic Docker Container Updates
   watchtower:
-    <<: *common-keys-core
+    <<: *common-keys-apps
     image: containrrr/watchtower
     container_name: watchtower
     profiles: ["infra", "all"]
@@ -14,4 +14,4 @@ services:
       WATCHTOWER_NO_STARTUP_MESSAGE: "false"
       WATCHTOWER_SCHEDULE: "0 30 12 * * *" # Everyday at 12:30
       # DOCKER_HOST: tcp://socket-proxy:2375 # Use this if you have Socket Proxy enabled.
-      DOCKER_API_VERSION: "1.45"
+      DOCKER_API_VERSION: "1.48"

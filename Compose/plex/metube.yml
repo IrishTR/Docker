@@ -1,3 +1,4 @@
+services:
 # Youtube Downloader
   metube:
     <<: *common-keys-apps 

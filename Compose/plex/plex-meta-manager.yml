@@ -4,7 +4,7 @@ services:
     <<: *common-keys-apps
     image: linuxserver/kometa
     container_name: plexmm
-    profiles: ["plexmm"]
+    profiles: ["media", "all"]
     depends_on:
       - plex
     environment:
@@ -14,19 +14,20 @@ services:
 #      KOMETA_RUN: "True" #optional
       KOMETA_TEST: "False" #optional
       KOMETA_NO_MISSING: "False" #optional
-      KOMETA_FILE_PLEX_TOKEN: /run/secrets/plex_token
-      KOMETA_FILE_TRAKT_CLIENTID: /run/secrets/trakt_clientid #$TRAKT_CLIENTID
-      KOMETA_FILE_TRAKT_CLIENTSECRET: /run/secrets/trakt_clientsecret #$TRAKT_CLIENTSECRET
-      KOMETA_FILE_TRAKT_PIN: /run/secrets/trakt_pin #$TRAKT_PIN
-      KOMETA_FILE_GITHUB_TOKEN: /run/secrets/github_token #$GITHUB_TOKEN
-      KOMETA_FILE_RADARR_API: /run/secrets/radarr_api #$RADARR_API
-      KOMETA_FILE_SONARR_API: /run/secrets/sonarr_api #$SONARR_API
-      KOMETA_FILE_MDBLIST_API: /run/secrets/mdblist_api #$MDBLIST_API
-      KOMETA_FILE_OMDB_API: /run/secrets/omdb_api #$OMDB_API
-      KOMETA_FILE_TMDB_API: /run/secrets/tmdb_api #$TMDB_API
-      KOMETA_FILE_TAUTULLI_API: /run/secrets/tautulli_api #$TAUTULLI_API
-      SERVER_IP: $SERVER_IP
-      PLEX_PORT: $PLEX_PORT
+      KOMETA_PLEXTOKEN: $PLEX_TOKEN
+      KOMETA_TRAKTCLIENTID: $TRAKT_CLIENTID
+      KOMETA_TRAKTCLIENTSECRET: $TRAKT_CLIENTSECRET
+      KOMETA_TRAKTPIN: $TRAKT_PIN
+      KOMETA_GITHUBTOKEN: $GITHUB_TOKEN
+      KOMETA_RADARRAPI: $RADARR_API
+      KOMETA_SONARRAPI: $SONARR_API
+      KOMETA_MDBLISTAPI: $MDBLIST_API
+      KOMETA_OMDBAPI: $OMDB_API
+      KOMETA_TMDBAPI: $TMDB_API
+      KOMETA_TAUTULLIAPI: $TAUTULLI_API
+      KOMETA_SERVERIP: $SERVER_IP
+      KOMETA_PLEXPORT: $PLEX_PORT
+      KOMETA_NOTIFIARRAPI: $NOTIFIARR_API
     volumes:
       - $DOCKERDIR/plex-meta-manager/config:/config:rw
     secrets:

@@ -1,3 +1,4 @@
+services:
 # Ombi - Media Requests
   ombi:
     image: linuxserver/ombi
@@ -18,14 +19,14 @@
       BASE_URL: /ombi #optional
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.ombi-rtr.entrypoints=https"
+      - "traefik.http.routers.ombi-rtr.entrypoints=websecure"
       - "traefik.http.routers.ombi-rtr.priority=99"
       - "traefik.http.routers.ombi-rtr.rule=Host(`ombi.$DOMAINNAME`)"
       - "traefik.http.routers.ombi-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.ombi-rtr.service=ombi-svc"
       - "traefik.http.services.ombi-svc.loadbalancer.server.port=3579"
       ## API Oauth Bypass
-      - "traefik.http.routers.ombi-api-rtr.entrypoints=https"
+      - "traefik.http.routers.ombi-api-rtr.entrypoints=websecure"
       - "traefik.http.routers.ombi-api-rtr.rule=Host(`ombi.$DOMAINNAME`) && PathPrefix(`/api/`)"
       - "traefik.http.routers.ombi-api-rtr.priority=100"
       - "traefik.http.routers.ombi-api-rtr.middlewares=chain-no-auth@file"

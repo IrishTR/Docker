@@ -1,7 +1,8 @@
+#version: "3.9"
 ########################### NETWORKS
 networks:
-  t3_proxy:
-    name: t3_proxy
+  t2_proxy:
+    name: t2_proxy
     driver: bridge
     ipam:
       config:
@@ -18,7 +19,7 @@ x-environment: &default-tz-puid-pgid
 # Keys common to some of the services in basic-services.txt
 x-common-keys-core: &common-keys-core
   networks:
-    - t3_proxy
+    - t2_proxy
   security_opt:
     - no-new-privileges:true
   restart: always
@@ -26,7 +27,7 @@ x-common-keys-core: &common-keys-core
 # Keys common to some of the dependent services/apps
 x-common-keys-apps: &common-keys-apps
   networks:
-    - t3_proxy
+    - t2_proxy
   security_opt:
     - no-new-privileges:true
   restart: unless-stopped
@@ -39,14 +40,14 @@ secrets:
     file: $DOCKERDIR/secrets/plex_token
   mysql_root_password:
     file: $DOCKERDIR/secrets/mysql_root_password
-  # teslamate_db_name:
-  #   file: $DOCKERDIR/secrets/teslamate_db_name
-  # teslamate_db_user:
-  #   file: $DOCKERDIR/secrets/teslamate_db_user
-  # teslamate_db_password:
-  #   file: $DOCKERDIR/secrets/teslamate_db_password
-  # teslamate_ek:
-  #   file: $DOCKERDIR/secrets/teslamate_ek
+  teslamate_db_name:
+    file: $DOCKERDIR/secrets/teslamate_db_name
+  teslamate_db_user:
+    file: $DOCKERDIR/secrets/teslamate_db_user
+  teslamate_db_password:
+    file: $DOCKERDIR/secrets/teslamate_db_password
+  teslamate_ek:
+    file: $DOCKERDIR/secrets/teslamate_ek
   transmission_rpc_username:
     file: $DOCKERDIR/secrets/transmission_rpc_username
   transmission_rpc_password:
@@ -61,22 +62,22 @@ secrets:
     file: $DOCKERDIR/secrets/http_password
   http_username:
     file: $DOCKERDIR/secrets/http_username
-  # nc_db_name:
-  #   file: $DOCKERDIR/secrets/nc_db_name
-  # nc_db_user:
-  #   file: $DOCKERDIR/secrets/nc_db_user
-  # nc_db_password:
-  #   file: $DOCKERDIR/secrets/nc_db_password
-  # nc_admin_user:
-  #   file: $DOCKERDIR/secrets/nc_admin_user
-  # nc_admin_password:
-  #   file: $DOCKERDIR/secrets/nc_admin_password
-  # grafana_admin_user:
-  #   file: $DOCKERDIR/secrets/grafana_admin_user
-  # grafana_pw:
-  #   file: $DOCKERDIR/secrets/grafana_pw
-  # grafana_admin_pw:
-  #   file: $DOCKERDIR/secrets/grafana_admin_pw
+  nc_db_name:
+    file: $DOCKERDIR/secrets/nc_db_name
+  nc_db_user:
+    file: $DOCKERDIR/secrets/nc_db_user
+  nc_db_password:
+    file: $DOCKERDIR/secrets/nc_db_password
+  nc_admin_user:
+    file: $DOCKERDIR/secrets/nc_admin_user
+  nc_admin_password:
+    file: $DOCKERDIR/secrets/nc_admin_password
+  grafana_admin_user:
+    file: $DOCKERDIR/secrets/grafana_admin_user
+  grafana_pw:
+    file: $DOCKERDIR/secrets/grafana_pw
+  grafana_admin_pw:
+    file: $DOCKERDIR/secrets/grafana_admin_pw
   cf_email:
     file: $DOCKERDIR/secrets/cf_email
   cf_api_key:
@@ -101,8 +102,6 @@ secrets:
     file: $DOCKERDIR/secrets/trakt_pin
   glances_password:
     file: $DOCKERDIR/secrets/glances_password
-  glances_pass:
-    file: $DOCKERDIR/secrets/glances_pass    
   portainer_key:
     file: $DOCKERDIR/secrets/portainer_key
   radarr_api:
@@ -131,68 +130,66 @@ secrets:
     file: $DOCKERDIR/secrets/tmdb_api_key
   mdblist_api:
     file: $DOCKERDIR/secrets/mdblist_api_key
-  hpusername:
-    file: $DOCKERDIR/secrets/hpusername
-  hppassword:
-    file: $DOCKERDIR/secrets/hppassword
+  notifiarr_api:
+    file: $DOCKERDIR/secrets/notifiarr_api_key
 
 
 ########################### SERVICES
 services:
 
-# Traefik 3 - Reverse Proxy
+# Traefik 2 - Reverse Proxy
   traefik:
     <<: *common-keys-core
-    image: traefik:3.3
+    image: traefik:2.11
     container_name: traefik
     profiles: ["infra", "all"]
     command: # CLI arguments
       - --global.checkNewVersion=true
       - --global.sendAnonymousUsage=false
-      - --entryPoints.web.address=:80
-      - --entryPoints.websecure.address=:443
+      - --entryPoints.http.address=:80
+      - --entryPoints.https.address=:443
+      - --entrypoints.https.forwardedHeaders.trustedIPs=$CLOUDFLARE_IPS,$IPWHITELIST
+      - --entrypoints.https.forwardedHeaders.insecure
       - --entryPoints.traefik.address=:8080
-      # - --entryPoints.ping.address=:8081
-      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+    # - --entryPoints.ping.address=:8082
+      - --entrypoints.web.http.redirections.entrypoint.to=https
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
       - --entrypoints.web.http.redirections.entrypoint.permanent=true
       - --api=true
-      - --api.dashboard=true
       # - --api.insecure=true
-      # - --ping=true
-      # - --serversTransport.insecureSkipVerify=true
-      - --entrypoints.https.forwardedHeaders.trustedIPs=$CLOUDFLARE_IPS,$IPWHITELIST
+      - --api.dashboard=true
+      #- --ping=true
       - --log=true
-      - --log.filePath=/logs/traefik.log
-      - --log.level=INFO # (Default: error) DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+      - --log.level=ERROR # (Default: error) DEBUG, INFO, WARN, ERROR, FATAL, PANIC
       - --accessLog=true
-      - --accessLog.filePath=/logs/access.log
+      - --accessLog.filePath=/traefik.log
       - --accessLog.bufferingSize=100 # Configuring a buffer of 100 lines
       - --accessLog.filters.statusCodes=204-299,400-499,500-599
       - --providers.docker=true
-      - --providers.docker.endpoint=unix:///var/run/docker.sock # Disable for Socket Proxy. Enable otherwise.
-      #- --providers.docker.endpoint=tcp://socket-proxy:2375 # Enable for Socket Proxy. Disable otherwise.
+      - --providers.docker.endpoint=unix:///var/run/docker.sock # Use Docker Socket Proxy instead for improved security
+#      - --providers.docker.endpoint=tcp://socket-proxy:2375
+      # Automatically set Host rule for services
       - --providers.docker.exposedByDefault=false
-      - --providers.docker.network=t3_proxy 
-      # - --providers.docker.swarmMode=false # Traefik v2 Swarm
-      # - --providers.swarm.endpoint=tcp://127.0.0.1:2377 # Traefik v3 Swarm
-      - --entrypoints.websecure.http.tls=true
-      - --entrypoints.websecure.http.tls.options=tls-opts@file
+      - --entrypoints.https.http.tls.options=tls-opts@file
       # Add dns-cloudflare as default certresolver for all services. Also enables TLS and no need to specify on individual services
-      - --entrypoints.websecure.http.tls.certresolver=dns-cloudflare
-      - --entrypoints.websecure.http.tls.domains[0].main=$DOMAINNAME
-      - --entrypoints.websecure.http.tls.domains[0].sans=*.$DOMAINNAME
-      #- --entrypoints.websecure.http.tls.domains[1].main=$DOMAINNAME_1
-      #- --entrypoints.websecure.http.tls.domains[1].sans=*.$DOMAINNAME_1
+      - --entrypoints.https.http.tls.certresolver=dns-cloudflare
+      - --entrypoints.https.http.tls.domains[0].main=$DOMAINNAME
+      - --entrypoints.https.http.tls.domains[0].sans=*.$DOMAINNAME
+      # - --entrypoints.https.http.tls.domains[1].main=$DOMAINNAME1 # Pulls main cert for second domain
+      # - --entrypoints.https.http.tls.domains[1].sans=*.$DOMAINNAME1 # Pulls wildcard cert for second domain
+      - --providers.docker.network=t2_proxy
+      - --providers.docker.swarmMode=false
       - --providers.file.directory=/rules # Load dynamic configuration from one or more .toml or .yml files in a directory
       - --providers.file.watch=true # Only works on top level files in the rules folder
       # - --certificatesResolvers.dns-cloudflare.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory # LetsEncrypt Staging Server - uncomment when testing
+      - --certificatesResolvers.dns-cloudflare.acme.email=$CLOUDFLARE_EMAIL
       - --certificatesResolvers.dns-cloudflare.acme.storage=/acme.json
       - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.provider=cloudflare
       - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
-      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.propagation.delayBeforeChecks=90
+      - --certificatesResolvers.dns-cloudflare.acme.dnsChallenge.delayBeforeCheck=90 # To delay DNS check and reduce LE hitrate
+#      - --serversTransport.insecureSkipVerify=true
     networks:
-      t3_proxy:
+      t2_proxy:
         ipv4_address: $TRAEFIK_IP
     ports:
       - target: 80
@@ -204,24 +201,29 @@ services:
         protocol: tcp
         mode: host
     volumes:
-      - $DOCKERDIR/traefik3/rules:/rules
+      - $DOCKERDIR/traefik/rules:/rules
       - /var/run/docker.sock:/var/run/docker.sock:ro # Use Docker Socket Proxy instead for improved security
-      - $DOCKERDIR/traefik3/acme/acme.json:/acme.json # cert location - you must touch this file and change permissions to 600
-      - $DOCKERDIR/traefik3/logs:/logs # for fail2ban - make sure to touch file before starting container
+      - $DOCKERDIR/traefik/acme/acme.json:/acme.json # cert location - you must touch this file and change permissions to 600
+      - $DOCKERDIR/traefik/traefik.log:/traefik.log # for fail2ban - make sure to touch file before starting container
     environment:
       <<: *default-tz-puid-pgid
       DOMAINNAME: $DOMAINNAME
       CF_API_EMAIL_FILE: /run/secrets/cf_email
       CF_API_KEY_FILE: /run/secrets/cf_api_key
-      HTPASSWD_FILE: /run/secrets/htpasswd
+      HTPASSWD_FILE: /run/secrets/htpasswd # HTPASSWD_FILE can be whatever as it is not used/called anywhere.
     secrets:
       - cf_email
       - cf_api_key
       - htpasswd
     labels:
       - "traefik.enable=true"
+      # HTTP-to-HTTPS Redirect
+      # - "traefik.http.routers.http-catchall.entrypoints=http"
+      # - "traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)"
+      # - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+      # - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       # HTTP Routers
-      - "traefik.http.routers.traefik-rtr.entrypoints=websecure"
+      - "traefik.http.routers.traefik-rtr.entrypoints=https"
       - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.$DOMAINNAME`)"
       ## Services - API
       - "traefik.http.routers.traefik-rtr.service=api@internal"
@@ -233,7 +235,7 @@ services:
   # https://www.smarthomebeginner.com/google-oauth-with-traefik-docker/
   oauth:
     <<: *common-keys-core
-    image: reddthebamf/traefik-forward-auth:1.23.2-alpine-amd64 #thomseddon/traefik-forward-auth
+    image: reddthebamf/traefik-forward-auth:1.21rc-alpine-amd64 #thomseddon/traefik-forward-auth
     container_name: oauth
     profiles: ["infra", "all"]
     volumes:
@@ -254,7 +256,7 @@ services:
         target: /config
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.oauth-rtr.entrypoints=websecure"
+      - "traefik.http.routers.oauth-rtr.entrypoints=https"
       - "traefik.http.routers.oauth-rtr.rule=Host(`oauth.$DOMAINNAME`)"
       - "traefik.http.routers.oauth-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.oauth-rtr.service=oauth-svc"
@@ -276,7 +278,7 @@ services:
       <<: *default-tz-puid-pgid
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.portainer-rtr.entrypoints=websecure"
+      - "traefik.http.routers.portainer-rtr.entrypoints=https"
       - "traefik.http.routers.portainer-rtr.rule=Host(`portainer.$DOMAINNAME`)"
       - "traefik.http.routers.portainer-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.portainer-rtr.service=portainer-svc"
@@ -289,33 +291,24 @@ services:
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
-    profiles: ["infra", "all"]
+    profiles: ["apps", "all"]
     networks:
-      - t3_proxy
+      - t2_proxy
     # ports:
     #  - "$HOMEPAGE_PORT:3000" 
     volumes:
       - $DOCKERDIR/homepage:/app/config
       - /var/run/docker.sock:/var/run/docker.sock:ro # pass local proxy
-      - $USERDIR/media:/media
     environment:
       TZ: $TZ
       PUID: $PUID
-      PGID: 999
-      HOMEPAGE_ALLOWED_HOSTS: www.$DOMAINNAME
+      PGID: $PGID
       HOMEPAGE_VAR_DOMAINNAME: $DOMAINNAME
       HOMEPAGE_VAR_HDHOMERUN_IP: $HDHOMERUN_IP
       HOMEPAGE_VAR_SERVER_IP: $SERVER_IP
-      HOMEPAGE_VAR_ROUTER_IP: $ROUTER_IP
       HOMEPAGE_VAR_PLEX_PORT: $PLEX_PORT
-      HOMEPAGE_VAR_HOMEPAGE_LABEL: $HOMEPAGE_LABEL
-      HOMEPAGE_VAR_HOMEPAGE_LAT: $HOMEPAGE_LAT
-      HOMEPAGE_VAR_HOMEPAGE_LONG: $HOMEPAGE_LONG
-      HOMEPAGE_VAR_HOMEPAGE_TZ: $TZ
-      HOMEPAGE_FILE_HPUSERNAME: /run/secrets/hpusername
-      HOMEPAGE_FILE_HPPASSWORD: /run/secrets/hppassword
-      HOMEPAGE_FILE_GLANCES_PASS: /run/secrets/glances_pass
       HOMEPAGE_FILE_PLEX_TOKEN: /run/secrets/plex_token
+      HOMEPAGE_FILE_GLANCES_PASSWORD: /run/secrets/glances_password
       HOMEPAGE_FILE_PORTAINER_KEY: /run/secrets/portainer_key
       HOMEPAGE_FILE_TRANSMISSION_RPC_PASSWORD: /run/secrets/transmission_rpc_password
       HOMEPAGE_FILE_TRANSMISSION_RPC_USERNAME: /run/secrets/transmission_rpc_username
@@ -326,13 +319,12 @@ services:
       HOMEPAGE_FILE_TAUTULLI_API: /run/secrets/tautulli_api
       HOMEPAGE_FILE_SABNZBD_API: /run/secrets/sabnzbd_api
       HOMEPAGE_FILE_BAZARR_API: /run/secrets/bazarr_api
+      HOMEPAGE_FILE_OMBI_API: /run/secrets/ombi_api
       HOMEPAGE_FILE_READARR_API: /run/secrets/readarr_api
       HOMEPAGE_FILE_MYLAR_API: /run/secrets/mylar_api
     secrets:
-      - hpusername
-      - hppassword
       - portainer_key
-      - glances_pass
+      - glances_password
       - plex_token
       - transmission_rpc_password
       - transmission_rpc_username
@@ -349,7 +341,7 @@ services:
     labels:
       - "traefik.enable=true"
       # HTTP Routers
-      - "traefik.http.routers.homepage-rtr.entrypoints=websecure"
+      - "traefik.http.routers.homepage-rtr.entrypoints=https"
       - "traefik.http.routers.homepage-rtr.rule=Host(`www.$DOMAINNAME`)"
       # Middlewares
       - "traefik.http.routers.homepage-rtr.middlewares=chain-oauth@file"
@@ -380,13 +372,16 @@ services:
 
 # phpMyAdmin - Database management
   phpmyadmin:
-    <<: *common-keys-apps
+
     image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin
-    profiles: ["infra", "all"]
     networks:
-       - default
-       - t3_proxy
+      - default
+      - t2_proxy
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    profiles: ["infra", "all"]
 #    ports:
 #      - "$PHPMYADMIN_PORT:80"
     environment:
@@ -398,7 +393,7 @@ services:
       - mysql_root_password
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.phpmyadmin-rtr.entrypoints=websecure"
+      - "traefik.http.routers.phpmyadmin-rtr.entrypoints=https"
       - "traefik.http.routers.phpmyadmin-rtr.rule=Host(`pma.$DOMAINNAME`)"
       - "traefik.http.routers.phpmyadmin-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.phpmyadmin-rtr.service=phpmyadmin-svc"
@@ -412,9 +407,9 @@ services:
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
-    profiles: ["infra", "remote"]
+    profiles: ["infra", "all"]
     networks:
-      - t3_proxy
+      - t2_proxy
       - default
     volumes:
       - $DOCKERDIR/guacamole/temp:/temp
@@ -435,7 +430,7 @@ services:
       - guac_mysql_password
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.guacamole-rtr.entrypoints=websecure"
+      - "traefik.http.routers.guacamole-rtr.entrypoints=https"
       - "traefik.http.routers.guacamole-rtr.rule=Host(`guac.$DOMAINNAME`)"
       - "traefik.http.routers.guacamole-rtr.middlewares=chain-oauth@file,add-guacamole"
       - "traefik.http.middlewares.add-guacamole.addPrefix.prefix=/guacamole"
@@ -450,12 +445,12 @@ services:
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
-    profiles: ["infra", "remote"]
+    profiles: ["infra", "all"]
 
 # Cloudflare DDNS - Dynamic DNS Updater
   cloudddns:
     <<: *common-keys-core
-    image: reddthebamf/cloudflare-ddns:22-alpine3.19 #joshava/cloudflare-ddns
+    image: reddthebamf/cloudflare-ddns:20-alpine3.18 #joshava/cloudflare-ddns
     container_name: cloudddns
     profiles: ["infra", "all"]
     volumes:
@@ -464,145 +459,46 @@ services:
       <<: *default-tz-puid-pgid
       DOMAINNAME: $DOMAINNAME
 
-# # Mosquitto - MQTT Broker
-# # Create mosquitto.conf, passwd, mosquitto.log files  and set permissions to 775 user:docker
-# # dexec mosquitto /bin/sh -> mosquitto_passwd -b /mosquitto/config/passwd username passwd
-#   mosquitto:
-#     image: eclipse-mosquitto
-#     container_name: mosquitto
-#     networks:
-#       - default
-#     security_opt:
-#       - no-new-privileges:true
-#     restart: unless-stopped
-#     profiles: ["infra", "all"]
-# #    ports:
-# #      - "$MOSQUITTO_HTTP_PORT:1883" #http
-# #      - "9001:9001" #websockets
-# #      - "$MOSQUITTO_HTTPS_PORT:8883" #https 
-#     volumes:
-#       - $DOCKERDIR/mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
-#       - $DOCKERDIR/mosquitto/data:/mosquitto/data
-#       - $DOCKERDIR/mosquitto/config/passwd:/mosquitto/config/passwd
-#       - $DOCKERDIR/shared:/shared
-#     environment:
-#       <<: *default-tz-puid-pgid
+# Mosquitto - MQTT Broker
+# Create mosquitto.conf, passwd, mosquitto.log files  and set permissions to 775 user:docker
+# dexec mosquitto /bin/sh -> mosquitto_passwd -b /mosquitto/config/passwd username passwd
+  mosquitto:
+    <<: *common-keys-apps
+    image: eclipse-mosquitto
+    container_name: mosquitto
+    profiles: ["infra", "all"]
+#    ports:
+#      - "$MOSQUITTO_HTTP_PORT:1883" #http
+#      - "9001:9001" #websockets
+#      - "$MOSQUITTO_HTTPS_PORT:8883" #https 
+    volumes:
+      - $DOCKERDIR/mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - $DOCKERDIR/mosquitto/data:/mosquitto/data
+      - $DOCKERDIR/mosquitto/config/passwd:/mosquitto/config/passwd
+      - $DOCKERDIR/shared:/shared
+    environment:
+      <<: *default-tz-puid-pgid
 
 ############################# DATABASE
 
-# # Postgres - Database for TeslaMate
-#   postgres:
-#     image: postgres:15
-#     container_name: postgres
-#     networks:
-#       - default
-#     security_opt:
-#       - no-new-privileges:true
-#     restart: unless-stopped
-#     profiles: ["infra", "all"]
-#     volumes:
-#       - $DOCKERDIR/postgres:/var/lib/postgresql/data
-#     environment:
-#       <<: *default-tz-puid-pgid
-#       POSTGRES_DB__FILE: /run/secrets/teslamate_db_name
-#       POSTGRES_USER__FILE: /run/secrets/teslamate_db_user
-#       POSTGRES_PASSWORD__FILE: /run/secrets/teslamate_db_password
-#     secrets:
-#       - teslamate_db_name
-#       - teslamate_db_user
-#       - teslamate_db_password
-# #      POSTGRES_MULTIPLE_DATABASES: statping-{{ statping_db_pass }},teslamate-{{ teslamate_db_pass }}
-
-# Gluetun - VPN Client for Docker Containers and More
-# Gluetun only for use by torrent clients + on demand lan devices.
-  gluetun:
-    image: qmcgaw/gluetun
-    container_name: gluetun
-    security_opt:
-      - no-new-privileges:true
-    restart: unless-stopped
-    profiles: ["vpn", "downloads"]
-    networks:
-      - t3_proxy
-    cap_add:
-      - NET_ADMIN
-    devices:
-      - /dev/net/tun
-    dns:
-      - 1.1.1.1
-      - 1.0.0.1
-    ports:
-      - "8081:8080" # Exposing qBittorrent through Docker Host LAN IP
-    # #   - 8888:8888/tcp # HTTP proxy
-    # #   - 8388:8388/tcp # Shadowsocks
-    # #   - 8388:8388/udp # Shadowsocks
+# Postgres - Database for TeslaMate
+  postgres:
+    <<: *common-keys-core
+    image: postgres:15
+    container_name: postgres
+    profiles: ["infra", "all"]
     volumes:
-      - $DOCKERDIR/gluetun:/gluetun
-      - $DOCKERDIR/gluetun/portforward:/tmp/gluetun/
+      - $DOCKERDIR/postgres:/var/lib/postgresql/data
     environment:
-      TZ: $TZ
-      # Wireguard
-      # VPN_SERVICE_PROVIDER: surfshark
-      # VPN_TYPE: wireguard
-      # WIREGUARD_PRIVATE_KEY: $SURFSHARK_WG_PRIVATE_KEY
-      # WIREGUARD_ADDRESSES: 10.14.0.2/16
-      # SERVER_COUNTRIES: Netherlands
-      # OpenVPN
-      VPN_SERVICE_PROVIDER: private internet access
-      VPN_TYPE: openvpn
-      VPN_PORT_FORWARDING: on
-      #PRIVATE_INTERNET_ACCESS_VPN_PRIVATE_INTERNET_ACCESS_VPN_PORT_FORWARDING_STATUS_FILE: /gluetun/forwarded_port
-      VPN_PORT_FORWARDING_STATUS_FILE: /tmp/gluetun/forwarded_port
-      VPN_PORT_FORWARDING_USERNAME_SECRETFILE: /run/secrets/openvpn_user
-      VPN_PORT_FORWARDING_PASSWORD_SECRETFILE: /run/secrets/openvpn_password
-      OPENVPN_CONFIG: Argentina
-#      DNS_SERVER: 1.0.0.1, 1.1.1.1
-      OPENVPN_OPTS: --inactive 3600 --ping 10 --ping-exit 60
+      <<: *default-tz-puid-pgid
+      POSTGRES_DB__FILE: /run/secrets/teslamate_db_name
+      POSTGRES_USER__FILE: /run/secrets/teslamate_db_user
+      POSTGRES_PASSWORD__FILE: /run/secrets/teslamate_db_password
     secrets:
-      - source: pia_username
-        target: /run/secrets/openvpn_user
-      - source: pia_password
-        target: /run/secrets/openvpn_password
-    labels:
-      - "traefik.enable=true"
-      # HTTP Routers
-      - "traefik.http.routers.gluetun-qbittorrent-rtr.entrypoints=websecure"
-      - "traefik.http.routers.gluetun-qbittorrent-rtr.rule=Host(`qbit.$DOMAINNAME`)" # qBittorrent
-      # Middlewares
-      - "traefik.http.routers.gluetun-qbittorrent-rtr.middlewares=chain-oauth@file" # qBittorrent
-      # HTTP Services
-      - "traefik.http.routers.gluetun-qbittorrent-rtr.service=gluetun-svc" # qBittorrent
-      - "traefik.http.services.gluetun-svc.loadbalancer.server.port=8080" # qBittorrent
-
-  # qBittorrent - Torrent downloader
-  # Needs trailing / if using PathPrefixStrip
-  qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:latest
-    container_name: qbittorrent
-    security_opt:
-      - no-new-privileges:true
-    restart: unless-stopped
-    profiles: ["media", "downloads"]
-    network_mode: "service:gluetun"
-    # ports:
-    #   - "8081:8080" # Explosed via gluetun. 8081 because crowdsec is using port 8080
-    volumes:
-      - $DOCKERDIR/qbittorrent:/config
-      - $DOCKERDIR/gluetun/portforward:/tmp/gluetun/
-      - $DOWNLOAD_DIR:/downloads # Ensure that downloads folder is set to /data/downloads in qBittorrent
-    environment:
-      TZ: $TZ
-      PUID: $PUID
-      PGID: $PGID
-      UMASK_SET: 002
-      TORRENTING_PORT_FILE: /tmp/gluetun/forwarded_port
-    healthcheck: # https://github.com/qdm12/gluetun/issues/641#issuecomment-933856220
-      test: "curl -sf https://example.com  || exit 1"
-      interval: 1m
-      timeout: 10s
-      retries: 1
-    labels: # Traefik labels added via glueten
-      - "deunhealth.restart.on.unhealthy=true"
+      - teslamate_db_name
+      - teslamate_db_user
+      - teslamate_db_password
+#      POSTGRES_MULTIPLE_DATABASES: statping-{{ statping_db_pass }},teslamate-{{ teslamate_db_pass }}
 
 ############################# DOWNLOADERS
 # TransmissionBT - Torrent Downloader
@@ -611,9 +507,9 @@ services:
 #    image: linuxserver/transmission:latest
     image: haugene/transmission-openvpn
     container_name: transmission
-    profiles: ["media", "downloads", "all"]
+    profiles: ["media", "all"]
     networks:
-      t3_proxy:
+      t2_proxy:
         ipv4_address: $TRANSMISSION_IP
     # ports:
     #   - "$TRANSMISSION_PORT:9091"
@@ -678,7 +574,7 @@ services:
       - transmission_rpc_password
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.transmission-rtr.entrypoints=websecure"
+      - "traefik.http.routers.transmission-rtr.entrypoints=https"
       - "traefik.http.routers.transmission-rtr.rule=Host(`transmission.$DOMAINNAME`)"
       - "traefik.http.routers.transmission-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.transmission-rtr.service=transmission-svc"
@@ -689,34 +585,30 @@ services:
     <<: *common-keys-apps 
     image: linuxserver/sabnzbd
     container_name: sabnzbd
-    profiles: ["media", "downloads", "all"]
+    profiles: ["media", "all"]
 #    ports:
 #      - "$SABNZBD_PORT:8080"
     volumes:
       - $DOCKERDIR/sabnzbd:/config
       - $DOWNLOAD_DIR:/downloads
       - $DOWNLOAD_DIR/incomplete:/incomplete
-      - $USERDIR/media/storage:/storage
     environment:
       <<: *default-tz-puid-pgid
       UMASK_SET: 002
     labels:
       - "traefik.enable=true"
-      # HTTP Routers Auth Bypass
-      - "traefik.http.routers.sabnzbd-rtr-bypass.entrypoints=websecure"
-      - "traefik.http.routers.sabnzbd-rtr-bypass.rule=Host(`sabnzbd.$DOMAINNAME`) && (Header(`X-Api-Key`, `$SABNZBD_API`) || Query(`apikey`, `$SABNZBD_API`))"
-      - "traefik.http.routers.sabnzbd-rtr-bypass.priority=100"
-      # HTTP Routers Auth
-      - "traefik.http.routers.sabnzbd-rtr.entrypoints=websecure"
-      - "traefik.http.routers.sabnzbd-rtr.rule=Host(`sabnzbd.$DOMAINNAME`)"
+      - "traefik.http.routers.sabnzbd-rtr.entrypoints=https"
       - "traefik.http.routers.sabnzbd-rtr.priority=99"
-      # Middlewares
-      - "traefik.http.routers.sabnzbd-rtr-bypass.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.sabnzbd-rtr.rule=Host(`sabnzbd.$DOMAINNAME`)"
       - "traefik.http.routers.sabnzbd-rtr.middlewares=chain-oauth@file"
-      # HTTP Services
       - "traefik.http.routers.sabnzbd-rtr.service=sabnzbd-svc"
-      - "traefik.http.routers.sabnzbd-rtr-bypass.service=sabnzbd-svc"
       - "traefik.http.services.sabnzbd-svc.loadbalancer.server.port=8080"
+      ## API ROUTER - Allow access to API without auth for 3rd party app access
+      - "traefik.http.routers.sabnzbd-api-rtr.entrypoints=https"
+      - "traefik.http.routers.sabnzbd-api-rtr.priority=100"
+      - "traefik.http.routers.sabnzbd-api-rtr.rule=Host(`sabnzbd.$DOMAINNAME`) && (Headers(`X-Api-Key`, `$SABNZBD_API`) || Query(`apikey=$SABNZBD_API`))"
+      - "traefik.http.routers.sabnzbd-api-rtr.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.sabnzbd-api-rtr.service=sabnzbd-svc"
 
 ############################# INDEXERS
 # PROWLARR - NZB/TOR Proxy Search
@@ -733,23 +625,19 @@ services:
 #      - $PROWLARR_PORT:9696
     labels:
       - "traefik.enable=true"
-      # HTTP Routers Auth Bypass
-      - "traefik.http.routers.prowlarr-rtr-bypass.entrypoints=websecure"
-      - "traefik.http.routers.prowlarr-rtr-bypass.rule=Host(`prowlarr.$DOMAINNAME`) && (Header(`X-Api-Key`, `$PROWLARR_API`) || Query(`apikey`, `$PROWLARR_API`))"
-      - "traefik.http.routers.prowlarr-rtr-bypass.priority=100"
-      # HTTP Routers Auth
-      - "traefik.http.routers.prowlarr-rtr.entrypoints=websecure"
-      - "traefik.http.routers.prowlarr-rtr.rule=Host(`prowlarr.$DOMAINNAME`)"
+      - "traefik.http.routers.prowlarr-rtr.entrypoints=https"
       - "traefik.http.routers.prowlarr-rtr.priority=99"
-      # Middlewares
-      - "traefik.http.routers.prowlarr-rtr-bypass.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.prowlarr-rtr.rule=Host(`prowlarr.$DOMAINNAME`)"
       - "traefik.http.routers.prowlarr-rtr.middlewares=chain-oauth@file"
-      # HTTP Services
       - "traefik.http.routers.prowlarr-rtr.service=prowlarr-svc"
-      - "traefik.http.routers.prowlarr-rtr-bypass.service=prowlarr-svc"
       - "traefik.http.services.prowlarr-svc.loadbalancer.server.port=9696"
+      # API ROUTER - Allow access to API without auth for 3rd party app access
+      - "traefik.http.routers.prowlarr-api-rtr.entrypoints=https"
+      - "traefik.http.routers.prowlarr-api-rtr.priority=100"
+      - "traefik.http.routers.prowlarr-api-rtr.rule=Host(`prowlarr.$DOMAINNAME`) && (Headers(`X-Api-Key`, `$PROWLARR_API`) || Query(`apikey=$PROWLARR_API`))"
+      - "traefik.http.routers.prowlarr-api-rtr.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.prowlarr-api-rtr.service=prowlarr-svc"
 
-# Proxy Server to bypass Cloudflare protection
   flaresolverr:
     <<: *common-keys-apps
     image: ghcr.io/flaresolverr/flaresolverr:latest
@@ -762,6 +650,28 @@ services:
       CAPTCHA_SOLVER: ${CAPTCHA_SOLVER:-none}
 #    ports:
 #      - "${PORT:-8191}:8191"
+
+
+# NZBHydra2 - NZB meta search
+  hydra:
+    <<: *common-keys-apps
+    image: linuxserver/nzbhydra2
+    container_name: hydra
+    profiles: ["media", "all"]
+#    ports:
+#      - "$NZBHYDRA_PORT:5076"
+    volumes:
+      - $DOCKERDIR/hydra2:/config
+      - $DOWNLOAD_DIR:/downloads
+    environment:
+      <<: *default-tz-puid-pgid
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hydra-rtr.entrypoints=https"
+      - "traefik.http.routers.hydra-rtr.rule=Host(`hydra.$DOMAINNAME`)"
+      - "traefik.http.routers.hydra-rtr.middlewares=chain-oauth@file"
+      - "traefik.http.routers.hydra-rtr.service=hydra-svc"
+      - "traefik.http.services.hydra-svc.loadbalancer.server.port=5076"
 
 ############################# PVRS
 
@@ -782,21 +692,18 @@ services:
       <<: *default-tz-puid-pgid
     labels:
       - "traefik.enable=true"
-      # HTTP Routers Auth Bypass
-      - "traefik.http.routers.lidarr-rtr-bypass.entrypoints=websecure"
-      - "traefik.http.routers.lidarr-rtr-bypass.rule=Host(`lidarr.$DOMAINNAME`) && (Header(`X-Api-Key`, `$LIDARR_API`) || Query(`apikey`, `$LIDARR_API`))"
-      - "traefik.http.routers.lidarr-rtr-bypass.priority=100"
-      # HTTP Routers Auth
-      - "traefik.http.routers.lidarr-rtr.entrypoints=websecure"
-      - "traefik.http.routers.lidarr-rtr.rule=Host(`lidarr.$DOMAINNAME`)"
+      - "traefik.http.routers.lidarr-rtr.entrypoints=https"
       - "traefik.http.routers.lidarr-rtr.priority=99"
-      # Middlewares
-      - "traefik.http.routers.lidarr-rtr-bypass.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.lidarr-rtr.rule=Host(`lidarr.$DOMAINNAME`)"
       - "traefik.http.routers.lidarr-rtr.middlewares=chain-oauth@file"
-      # HTTP Services
       - "traefik.http.routers.lidarr-rtr.service=lidarr-svc"
-      - "traefik.http.routers.lidarr-rtr-bypass.service=lidarr-svc"
       - "traefik.http.services.lidarr-svc.loadbalancer.server.port=8686"
+      ## API ROUTER - Allow access to API without auth for 3rd party app access
+      - "traefik.http.routers.lidarr-api-rtr.entrypoints=https"
+      - "traefik.http.routers.lidarr-api-rtr.priority=100"
+      - "traefik.http.routers.lidarr-api-rtr.rule=Host(`lidarr.$DOMAINNAME`) && (Headers(`X-Api-Key`, `$LIDARR_API`) || Query(`apikey=$LIDARR_API`))"
+      - "traefik.http.routers.lidarr-api-rtr.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.lidarr-api-rtr.service=lidarr-svc"
 
 # Radarr - Movie management
   radarr:
@@ -816,21 +723,18 @@ services:
       <<: *default-tz-puid-pgid
     labels:
       - "traefik.enable=true"
-      # HTTP Routers Auth Bypass
-      - "traefik.http.routers.radarr-rtr-bypass.entrypoints=websecure"
-      - "traefik.http.routers.radarr-rtr-bypass.rule=Host(`radarr.$DOMAINNAME`) && (Header(`X-Api-Key`, `$RADARR_API`) || Query(`apikey`, `$RADARR_API`))"
-      - "traefik.http.routers.radarr-rtr-bypass.priority=100"
-      # HTTP Routers Auth
-      - "traefik.http.routers.radarr-rtr.entrypoints=websecure"
-      - "traefik.http.routers.radarr-rtr.rule=Host(`radarr.$DOMAINNAME`)"
+      - "traefik.http.routers.radarr-rtr.entrypoints=https"
       - "traefik.http.routers.radarr-rtr.priority=99"
-      # Middlewares
-      - "traefik.http.routers.radarr-rtr-bypass.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.radarr-rtr.rule=Host(`radarr.$DOMAINNAME`)"
       - "traefik.http.routers.radarr-rtr.middlewares=chain-oauth@file"
-      # HTTP Services
       - "traefik.http.routers.radarr-rtr.service=radarr-svc"
-      - "traefik.http.routers.radarr-rtr-bypass.service=radarr-svc"
       - "traefik.http.services.radarr-svc.loadbalancer.server.port=7878"
+      ## API ROUTER - Allow access to API without auth for 3rd party app access
+      - "traefik.http.routers.radarr-api-rtr.entrypoints=https"
+      - "traefik.http.routers.radarr-api-rtr.priority=100"
+      - "traefik.http.routers.radarr-api-rtr.rule=Host(`radarr.$DOMAINNAME`) && (Headers(`X-Api-Key`, `$RADARR_API`) || Query(`apikey=$RADARR_API`))"
+      - "traefik.http.routers.radarr-api-rtr.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.radarr-api-rtr.service=radarr-svc"
 
 # Sonarr - TV Shows management
   sonarr:
@@ -849,21 +753,18 @@ services:
       <<: *default-tz-puid-pgid
     labels:
       - "traefik.enable=true"
-      # HTTP Routers Auth Bypass
-      - "traefik.http.routers.sonarr-rtr-bypass.entrypoints=websecure"
-      - "traefik.http.routers.sonarr-rtr-bypass.rule=Host(`sonarr.$DOMAINNAME`) && (Header(`X-Api-Key`, `$SONARR_API`) || Query(`apikey`, `$SONARR_API`))"
-      - "traefik.http.routers.sonarr-rtr-bypass.priority=100"
-      # HTTP Routers Auth
-      - "traefik.http.routers.sonarr-rtr.entrypoints=websecure"
-      - "traefik.http.routers.sonarr-rtr.rule=Host(`sonarr.$DOMAINNAME`)"
+      - "traefik.http.routers.sonarr-rtr.entrypoints=https"
       - "traefik.http.routers.sonarr-rtr.priority=99"
-      # Middlewares
-      - "traefik.http.routers.sonarr-rtr-bypass.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.sonarr-rtr.rule=Host(`sonarr.$DOMAINNAME`)"
       - "traefik.http.routers.sonarr-rtr.middlewares=chain-oauth@file"
-      # HTTP Services
       - "traefik.http.routers.sonarr-rtr.service=sonarr-svc"
-      - "traefik.http.routers.sonarr-rtr-bypass.service=sonarr-svc"
       - "traefik.http.services.sonarr-svc.loadbalancer.server.port=8989"
+      ## API ROUTER - Allow access to API without auth for 3rd party app access
+      - "traefik.http.routers.sonarr-api-rtr.entrypoints=https"
+      - "traefik.http.routers.sonarr-api-rtr.priority=100"
+      - "traefik.http.routers.sonarr-api-rtr.rule=Host(`sonarr.$DOMAINNAME`) && (Headers(`X-Api-Key`, `$SONARR_API`) || Query(`apikey=$SONARR_API`))"
+      - "traefik.http.routers.sonarr-api-rtr.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.sonarr-api-rtr.service=sonarr-svc"
 
 # Book Manager and Automation
   readarr:
@@ -871,8 +772,6 @@ services:
     image: linuxserver/readarr:nightly
     container_name: readarr
     profiles: ["media", "all"]
-#    ports:
-#      - "$READARR_PORT:8989"
     volumes:
       - $DOCKERDIR/readarr/config:/config:Z
       - $DOWNLOAD_DIR:/downloads
@@ -881,21 +780,18 @@ services:
       <<: *default-tz-puid-pgid
     labels:
       - "traefik.enable=true"
-      # HTTP Routers Auth Bypass
-      - "traefik.http.routers.readarr-rtr-bypass.entrypoints=websecure"
-      - "traefik.http.routers.readarr-rtr-bypass.rule=Host(`readarr.$DOMAINNAME`) && (Header(`X-Api-Key`, `$READARR_API`) || Query(`apikey`, `$READARR_API`))"
-      - "traefik.http.routers.readarr-rtr-bypass.priority=100"
-      # HTTP Routers Auth
-      - "traefik.http.routers.readarr-rtr.entrypoints=websecure"
-      - "traefik.http.routers.readarr-rtr.rule=Host(`readarr.$DOMAINNAME`)"
+      - "traefik.http.routers.readarr-rtr.entrypoints=https"
       - "traefik.http.routers.readarr-rtr.priority=99"
-      # Middlewares
-      - "traefik.http.routers.readarr-rtr-bypass.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.readarr-rtr.rule=Host(`readarr.$DOMAINNAME`)"
       - "traefik.http.routers.readarr-rtr.middlewares=chain-oauth@file"
-      # HTTP Services
       - "traefik.http.routers.readarr-rtr.service=readarr-svc"
-      - "traefik.http.routers.readarr-rtr-bypass.service=readarr-svc"
       - "traefik.http.services.readarr-svc.loadbalancer.server.port=8787"
+      # API ROUTER - Allow access to API without auth for 3rd party app access
+      - "traefik.http.routers.readarr-api-rtr.entrypoints=https"
+      - "traefik.http.routers.readarr-api-rtr.priority=100"
+      - "traefik.http.routers.readarr-api-rtr.rule=Host(`READARR.$DOMAINNAME`) && (Headers(`X-Api-Key`, `$READARR_API`) || Query(`apikey=$READARR_API`))"
+      - "traefik.http.routers.readarr-api-rtr.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.readarr-api-rtr.service=readarr-svc"
 
 # Mylar - Comic Book management
   mylar:
@@ -913,42 +809,46 @@ services:
       <<: *default-tz-puid-pgid
     labels:
       - "traefik.enable=true"
-      # HTTP Routers Auth Bypass
-      - "traefik.http.routers.mylar-rtr-bypass.entrypoints=websecure"
-      - "traefik.http.routers.mylar-rtr-bypass.rule=Host(`mylar.$DOMAINNAME`) && (Header(`X-Api-Key`, `$MYLAR_API`) || Query(`apikey`, `$MYLAR_API`))"
-      - "traefik.http.routers.mylar-rtr-bypass.priority=100"
-      # HTTP Routers Auth
-      - "traefik.http.routers.mylar-rtr.entrypoints=websecure"
-      - "traefik.http.routers.mylar-rtr.rule=Host(`mylar.$DOMAINNAME`)"
+      - "traefik.http.routers.mylar-rtr.entrypoints=https"
       - "traefik.http.routers.mylar-rtr.priority=99"
-      # Middlewares
-      - "traefik.http.routers.mylar-rtr-bypass.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.mylar-rtr.rule=Host(`mylar.$DOMAINNAME`)"
       - "traefik.http.routers.mylar-rtr.middlewares=chain-oauth@file"
-      # HTTP Services
       - "traefik.http.routers.mylar-rtr.service=mylar-svc"
-      - "traefik.http.routers.mylar-rtr-bypass.service=mylar-svc"
       - "traefik.http.services.mylar-svc.loadbalancer.server.port=8090"
+      # API ROUTER - Allow access to API without auth for 3rd party app access
+      - "traefik.http.routers.mylar-api-rtr.entrypoints=https"
+      - "traefik.http.routers.mylar-api-rtr.priority=100"
+      - "traefik.http.routers.mylar-api-rtr.rule=Host(`mylar.$DOMAINNAME`) && (Headers(`X-Api-Key`, `$MYLAR_API`) || Query(`apikey=$MYLAR_API`))"
+      - "traefik.http.routers.mylar-api-rtr.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.mylar-api-rtr.service=mylar-svc"
 
-# Youtube Downloader
-  metube:
-    <<: *common-keys-apps 
-    image: ghcr.io/alexta69/metube
-    container_name: metube
+# YouTube Downloader
+  youtubedl:
+    <<: *common-keys-apps
+    image: tzahi12345/youtubedl-material:latest
+    container_name: youtubedl
     profiles: ["media", "all"]
 #    ports:
-#      - "8081:8081"
+#     - "$YOUTUBEDLMATERIAL_PORT:17442"
     volumes:
-      - $DOWNLOAD_DIR:/downloads
+      - $DOCKERDIR/youtubedl-material/config:/app/appdata
+      - $DOWNLOAD_DIR/youtubedl-material/audio:/app/audio
+      - $DOWNLOAD_DIR/youtubedl-material/video:/app/video
+      - $DOWNLOAD_DIR/youtubedl-material/subscriptions:/app/subscriptions
+      - $DOCKERDIR/youtubedl-material/users:/app/users
     environment:
-      <<: *default-tz-puid-pgid
-      DEFAULT_THEME: dark
+      UID: $PUID
+      GID: $PGID
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.metube-rtr.entrypoints=websecure"
-      - "traefik.http.routers.metube-rtr.rule=Host(`metube.$DOMAINNAME`)"
-      - "traefik.http.routers.metube-rtr.middlewares=chain-oauth@file"
-      - "traefik.http.routers.metube-rtr.service=metube-svc"
-      - "traefik.http.services.metube-svc.loadbalancer.server.port=8081"
+      ## HTTP Routers
+      - "traefik.http.routers.youtubedl-rtr.entrypoints=https"
+      - "traefik.http.routers.youtubedl-rtr.rule=Host(`ytdl.$DOMAINNAME`)"
+      ## Middlewares
+      - "traefik.http.routers.youtubedl-rtr.middlewares=chain-oauth@file"
+      ## HTTP Services
+      - "traefik.http.routers.youtubedl-rtr.service=youtubedl-svc"
+      - "traefik.http.services.youtubedl-svc.loadbalancer.server.port=17442"
 
 #Notifiarr
   notifiarr:
@@ -980,18 +880,14 @@ services:
       DN_RADARR_0_URL: http://radarr:7878/radarr
       DN_RADARR_0_API_KEY: $RADARR_API
       DN_READARR_0_NAME: Readarr.$DOMAINNAME
-      DN_READARR_0_URL: http://readarr:8787/readarr
+      DN_READARR_0_URL: http://readarr:8787
       DN_READARR_0_API_KEY: $READARR_API
       DN_SONARR_0_NAME: Sonarr.$DOMAINNAME
       DN_SONARR_0_URL: http://sonarr:8989/sonarr
       DN_SONARR_0_API_KEY: $SONARR_API
       DN_SABNZBD_0_NAME: Sabnzbd.$DOMAINNAME
-      DN_SABNZBD_0_URL: http://sabnzbd:8080
+      DN_SABNZBD_0_URL: https://sabnzbd:8080
       DN_SABNZBD_0_API_KEY: $SABNZBD_API
-      #DN_TRANSMISSION_0_NAME: Transmission.$DOMAINNAME
-      #DN_TRANSMISSION_0_URL: http://transmission:9091
-      #DN_TRANSMISSION_0_USERNAME: 
-      #DN_TRANSMISSION_0_PASSWORD: 
       DN_LIDARR_1_NAME: Lidarr2.$DOMAINNAME
       DN_LIDARR_1_URL: https://lidarr2.$DOMAINNAME/lidarr
       DN_LIDARR_1_API_KEY: $LIDARR_API
@@ -1026,50 +922,32 @@ services:
       DN_SABNZBD_2_NAME: Sabnzbd.$DOMAINNAME2
       DN_SABNZBD_2_URL: https://sabnzbd.$DOMAINNAME2
       DN_SABNZBD_2_API_KEY: $SABNZBD_API
-      DN_RADARR_3_NAME: Radarr.$DOMAINNAME3
-      DN_RADARR_3_URL: https://radarr.$DOMAINNAME3/radarr
-      DN_RADARR_3_API_KEY: $RADARR2_API
-      DN_SONARR_3_NAME: Sonarr.$DOMAINNAME3
-      DN_SONARR_3_URL: https://sonarr.$DOMAINNAME3/sonarr
-      DN_SONARR_3_API_KEY: $SONARR2_API
-      DN_LIDARR_3_NAME: Lidarr.$DOMAINNAME3
-      DN_LIDARR_3_URL: https://lidarr.$DOMAINNAME3/lidarr
-      DN_LIDARR_3_API_KEY: $LIDARR2_API
-      DN_SABNZBD_3_NAME: Sabnzbd.$DOMAINNAME3
-      DN_SABNZBD_3_URL: https://sabnzbd.$DOMAINNAME3
-      DN_SABNZBD_3_API_KEY: $SABNZBD2_API
-      DN_PROWLARR_3_NAME: Prowlarr.$DOMAINNAME3
-      DN_PROWLARR_3_URL: https://prowlarr.$DOMAINNAME3
-      DN_PROWLARR_3_API_KEY: $PROWLARR2_API
-      DN_READARR_1_NAME: Readarr.$DOMAINNAME3
-      DN_READARR_1_URL: https://readarr.$DOMAINNAME3/readarr
-      DN_READARR_1_API_KEY: $READARR2_API
       DN_PLEX_URL: https://plex.$DOMAINNAME
 #      DN_PLEX_TOKEN_FILE: /run/secrets/plex_token #$PLEX_TOKEN
       DN_TAUTULLI_NAME: Tautulli.$DOMAINNAME
       DN_TAUTULLI_URL: http://tautulli:8181
       DN_TAUTULLI_API_KEY: $TAUTULLI_API
+#      HTTP_USERNAME_FILE: /run/secrets/http_username
+#      HTTP_PASSWORD_FILE: /run/secrets/http_password
+#      PLEX_TOKEN_FILE: /run/secrets/plex_token
     secrets:
       - http_username
       - http_password
       - plex_token
     labels:
       - "traefik.enable=true"
-      # HTTP Routers Auth Bypass
-      - "traefik.http.routers.notifiarr-rtr-bypass.entrypoints=websecure"
-      - "traefik.http.routers.notifiarr-rtr-bypass.rule=Host(`notifiarr.$DOMAINNAME`) && (Header(`X-Api-Key`, `$NOTIFIARR_API`) || Query(`apikey`, `$NOTIFIARR_API`))"
-      - "traefik.http.routers.notifiarr-rtr-bypass.priority=100"
-      # HTTP Routers Auth
-      - "traefik.http.routers.notifiarr-rtr.entrypoints=websecure"
-      - "traefik.http.routers.notifiarr-rtr.rule=Host(`notifiarr.$DOMAINNAME`)"
+      - "traefik.http.routers.notifiarr-rtr.entrypoints=https"
       - "traefik.http.routers.notifiarr-rtr.priority=99"
-      # Middlewares
-      - "traefik.http.routers.notifiarr-rtr-bypass.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.notifiarr-rtr.rule=Host(`notifiarr.$DOMAINNAME`)"
       - "traefik.http.routers.notifiarr-rtr.middlewares=chain-oauth@file"
-      # HTTP Services
       - "traefik.http.routers.notifiarr-rtr.service=notifiarr-svc"
-      - "traefik.http.routers.notifiarr-rtr-bypass.service=notifiarr-svc"
       - "traefik.http.services.notifiarr-svc.loadbalancer.server.port=5454"
+      # API ROUTER - Allow access to API without auth for 3rd party app access
+      - "traefik.http.routers.notifiarr-api-rtr.entrypoints=https"
+      - "traefik.http.routers.notifiarr-api-rtr.priority=100"
+      - "traefik.http.routers.notifiarr-api-rtr.rule=Host(`notifiarr.$DOMAINNAME`) && (Headers(`X-Api-Key`, `$NOTIFIARR_API`) || Query(`apikey=$NOTIFIARR_API`))"
+      - "traefik.http.routers.notifiarr-api-rtr.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.notifiarr-api-rtr.service=notifiarr-svc"
 
 ############################# MEDIA
   plex:
@@ -1092,28 +970,26 @@ services:
       - plex_claim
     hostname: plex
     networks:
-      t3_proxy:
+      t2_proxy:
     ports:
       - $PLEX_PORT:32400/tcp
       - 3005:3005/tcp
       - 8324:8324/tcp
       - 32469:32469/tcp
       - 1900:1900/udp
-      - 5351:5351/udp
-      - 5353:5353/udp
       - 32410:32410/udp
       - 32412:32412/udp
       - 32413:32413/udp
       - 32414:32414/udp
-      - 33400:33400/tcp
     volumes:
-      - $DOCKERDIR/Plex/preroll:/preroll
+#      - $USERDIR/plexdrive/PlexTranscode:/transcode
+      - $USERDIR/plexdrive/PlexPreRoll:/PlexPreRoll
       - $USERDIR/media:/media
       - $DOCKERDIR/Plex/DB:/config
       - /dev/shm:/transcode
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.plex-rtr.entrypoints=websecure"
+      - "traefik.http.routers.plex-rtr.entrypoints=https"
       - "traefik.http.routers.plex-rtr.rule=Host(`plex.$DOMAINNAME`)"
       - "traefik.http.routers.plex-rtr.middlewares=chain-no-auth@file"
       - "traefik.http.routers.plex-rtr.service=plex-svc"
@@ -1124,30 +1000,30 @@ services:
     <<: *common-keys-apps
     image: linuxserver/kometa
     container_name: plexmm
-    profiles: ["media", "all"]
+    profiles: ["plexmm"]
     depends_on:
       - plex
     environment:
       <<: *default-tz-puid-pgid
       KOMETA_CONFIG: /config/config.yml #optional
       KOMETA_TIMES: 05:00 #optional
-      # KOMETA_RUN: "True" #optional
+#      KOMETA_RUN: "True" #optional
       KOMETA_TEST: "False" #optional
       KOMETA_NO_MISSING: "False" #optional
-      KOMETA_PLEXTOKEN: $PLEX_TOKEN
-      KOMETA_TRAKTCLIENTID: $TRAKT_CLIENTID
-      KOMETA_TRAKTCLIENTSECRET: $TRAKT_CLIENTSECRET
-      KOMETA_TRAKTPIN: $TRAKT_PIN
-      KOMETA_GITHUBTOKEN: $GITHUB_TOKEN
-      KOMETA_RADARRAPI: $RADARR_API
-      KOMETA_SONARRAPI: $SONARR_API
-      KOMETA_MDBLISTAPI: $MDBLIST_API
-      KOMETA_OMDBAPI: $OMDB_API
-      KOMETA_TMDBAPI: $TMDB_API
-      KOMETA_TAUTULLIAPI: $TAUTULLI_API
-      KOMETA_SERVERIP: $SERVER_IP
-      KOMETA_PLEXPORT: $PLEX_PORT
-      KOMETA_NOTIFIARRAPI: $NOTIFIARR_API
+      KOMETA_FILE_PLEX_TOKEN: /run/secrets/plex_token
+      KOMETA_FILE_TRAKT_CLIENTID: /run/secrets/trakt_clientid #$TRAKT_CLIENTID
+      KOMETA_FILE_TRAKT_CLIENTSECRET: /run/secrets/trakt_clientsecret #$TRAKT_CLIENTSECRET
+      KOMETA_FILE_TRAKT_PIN: /run/secrets/trakt_pin #$TRAKT_PIN
+      KOMETA_FILE_GITHUB_TOKEN: /run/secrets/github_token #$GITHUB_TOKEN
+      KOMETA_FILE_RADARR_API: /run/secrets/radarr_api #$RADARR_API
+      KOMETA_FILE_SONARR_API: /run/secrets/sonarr_api #$SONARR_API
+      KOMETA_FILE_MDBLIST_API: /run/secrets/mdblist_api #$MDBLIST_API
+      KOMETA_FILE_OMDB_API: /run/secrets/omdb_api #$OMDB_API
+      KOMETA_FILE_TMDB_API: /run/secrets/tmdb_api #$TMDB_API
+      KOMETA_FILE_TAUTULLI_API: /run/secrets/tautulli_api #$TAUTULLI_API
+      KOMETA_FILE_NOTIFIARR_API: /run/secrets/notifiarr_api
+      KOMETA_VAR_SERVER_IP: $SERVER_IP
+      KOMETA_VAR_PLEX_PORT: $PLEX_PORT
     volumes:
       - $DOCKERDIR/plex-meta-manager/config:/config:rw
     secrets:
@@ -1162,6 +1038,7 @@ services:
       - omdb_api
       - tmdb_api
       - tautulli_api
+      - notifiarr_api
 
 #Plex Image Cleanup
   plexic:
@@ -1196,44 +1073,12 @@ services:
       - $DOCKERDIR/plex-image-cleanup/config:/config
       - $DOCKERDIR/Plex/DB/Library/Application Support/Plex Media Server:/plex
 
-# Jellyfin - Media Server
-  jellyfin:
-    image: linuxserver/jellyfin:latest
-    container_name: jellyfin
-    networks:
-      - t3_proxy
-    security_opt:
-      - no-new-privileges:true
-    restart: "no"
-    profiles: ["media", "all"]
-#    user: $PUID:$PGID
-    devices:
-      - /dev/dri:/dev/dri # for harware transcoding
-    ports:
-      - "$JELLYFIN_PORT:8096"
-    environment:
-      <<: *default-tz-puid-pgid
-      UMASK_SET: 022
-    volumes:
-      - $DOCKERDIR/jellyfin:/config
-      - $USERDIR/media:/data/media
-      - $DOWNLOAD_DIR:/data/downloads
-      - /dev/shm:/data/transcode
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.jellyfin-rtr.entrypoints=websecure"
-      - "traefik.http.routers.jellyfin-rtr.rule=Host(`jellyfin.$DOMAINNAME`)"
-      - "traefik.http.routers.jellyfin-rtr.middlewares=chain-oauth@file"
-      - "traefik.http.routers.jellyfin-rtr.service=jellyfin-svc"
-      - "traefik.http.services.jellyfin-svc.loadbalancer.server.port=8096"
-
-# LMS - Music Server
+# Logitech Media Server - Music Server
   lms:
     <<: *common-keys-apps
-    image: lmscommunity/lyrionmusicserver
-    # logitechmediaserver:8.5.3
-#     image: reddthebamf/lms:8.4.0
+    image: reddthebamf/lms:8.4.0
     container_name: lms
+#    image: larsks/logitech-media-server
     profiles: ["media", "all"]
     ports:
       - "$LMS_PORT1:9000"
@@ -1241,16 +1086,15 @@ services:
       - "$LMS_PORT3:3483"
       - "$LMS_PORT3:3483/udp"
     volumes:
-      - $USERDIR/media/music:/music:ro
-      - $DOCKERDIR/lms:/config
+      - $USERDIR/media/music:/srv/music:ro
+      - $DOCKERDIR/squeezebox:/srv/squeezebox
       - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
     environment:
       <<: *default-tz-puid-pgid
-#      JAVA_OPTS: -Dserver.use-forward-headers=true
+      JAVA_OPTS: -Dserver.use-forward-headers=true
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.lms-rtr.entrypoints=websecure"
+      - "traefik.http.routers.lms-rtr.entrypoints=https"
       - "traefik.http.routers.lms-rtr.rule=Host(`lms.$DOMAINNAME`)"
       - "traefik.http.routers.lms-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.lms-rtr.service=lms-svc"
@@ -1262,7 +1106,7 @@ services:
     container_name: ombi
     networks:
       - default
-      - t3_proxy
+      - t2_proxy
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
@@ -1276,14 +1120,14 @@ services:
       BASE_URL: /ombi #optional
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.ombi-rtr.entrypoints=websecure"
+      - "traefik.http.routers.ombi-rtr.entrypoints=https"
       - "traefik.http.routers.ombi-rtr.priority=99"
       - "traefik.http.routers.ombi-rtr.rule=Host(`ombi.$DOMAINNAME`)"
       - "traefik.http.routers.ombi-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.ombi-rtr.service=ombi-svc"
       - "traefik.http.services.ombi-svc.loadbalancer.server.port=3579"
       ## API Oauth Bypass
-      - "traefik.http.routers.ombi-api-rtr.entrypoints=websecure"
+      - "traefik.http.routers.ombi-api-rtr.entrypoints=https"
       - "traefik.http.routers.ombi-api-rtr.rule=Host(`ombi.$DOMAINNAME`) && PathPrefix(`/api/`)"
       - "traefik.http.routers.ombi-api-rtr.priority=100"
       - "traefik.http.routers.ombi-api-rtr.middlewares=chain-no-auth@file"
@@ -1306,18 +1150,16 @@ services:
       - plex
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.tautulli-rtr.entrypoints=websecure"
+      - "traefik.http.routers.tautulli-rtr.entrypoints=https"
       - "traefik.http.routers.tautulli-rtr.priority=99"
       - "traefik.http.routers.tautulli-rtr.rule=Host(`tautulli.$DOMAINNAME`)"
       - "traefik.http.routers.tautulli-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.tautulli-rtr.service=tautulli-svc"
       - "traefik.http.services.tautulli-svc.loadbalancer.server.port=8181"
       ## API Oauth Bypass
-      - "traefik.http.routers.tautulli-api-rtr.entrypoints=websecure"
-      - "traefik.http.routers.tautulli-api-rtr.rule=Host(`tautulli.${DOMAINNAME}`) && (Header(`X-Api-Key`, `${TAUTULLI_DEVICE_KEY}`) || Query(`apikey`, `${TAUTULLI_DEVICE_KEY}`))"
-      - "traefik.http.routers.tautulli-api2-rtr.rule=Host(`tautulli.${DOMAINNAME}`) && (Header(`X-Api-Key`, `${TAUTULLI_API}`) || Query(`apikey`, `${TAUTULLI_API}`))"
+      - "traefik.http.routers.tautulli-api-rtr.entrypoints=https"
+      - "traefik.http.routers.tautulli-api-rtr.rule=Host(`tautulli.$DOMAINNAME`) && (Headers(`X-Api-Key`, `$TAUTULLI_DEVICE_KEY`) || Headers(`X-Api-Key`, `$TAUTULLI_API`) || Query(`apikey=$TAUTULLI_DEVICE_KEY`) || Query(`apikey=$TAUTULLI_API`))"
       - "traefik.http.routers.tautulli-api-rtr.priority=100"
-      - "traefik.http.routers.tautulli-api2-rtr.priority=101"
       - "traefik.http.routers.tautulli-api-rtr.middlewares=chain-no-auth@file"
       - "traefik.http.routers.tautulli-api-rtr.service=tautulli-svc"
 
@@ -1340,21 +1182,44 @@ services:
       <<: *default-tz-puid-pgid
     labels:
       - "traefik.enable=true"
-      # HTTP Routers Auth Bypass
-      - "traefik.http.routers.bazarr-rtr-bypass.entrypoints=websecure"
-      - "traefik.http.routers.bazarr-rtr-bypass.rule=Host(`bazarr.$DOMAINNAME`) && (Header(`X-Api-Key`, `$BAZARR_API`) || Query(`apikey`, `$BAZARR_API`))"
-      - "traefik.http.routers.bazarr-rtr-bypass.priority=100"
-      # HTTP Routers Auth
-      - "traefik.http.routers.bazarr-rtr.entrypoints=websecure"
-      - "traefik.http.routers.bazarr-rtr.rule=Host(`bazarr.$DOMAINNAME`)"
+      - "traefik.http.routers.bazarr-rtr.entrypoints=https"
       - "traefik.http.routers.bazarr-rtr.priority=99"
-      # Middlewares
-      - "traefik.http.routers.bazarr-rtr-bypass.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.bazarr-rtr.rule=Host(`bazarr.$DOMAINNAME`)"
       - "traefik.http.routers.bazarr-rtr.middlewares=chain-oauth@file"
-      # HTTP Services
       - "traefik.http.routers.bazarr-rtr.service=bazarr-svc"
-      - "traefik.http.routers.bazarr-rtr-bypass.service=bazarr-svc"
       - "traefik.http.services.bazarr-svc.loadbalancer.server.port=6767"
+      ## API ROUTER - Allow access to API without auth for 3rd party app access
+      - "traefik.http.routers.bazarr-api-rtr.entrypoints=https"
+      - "traefik.http.routers.bazarr-api-rtr.priority=100"
+      - "traefik.http.routers.bazarr-api-rtr.rule=Host(`bazarr.$DOMAINNAME`) && (Headers(`X-Api-Key`, `$BAZARR_API`) || Query(`apikey=$BAZARR_API`))"
+      - "traefik.http.routers.bazarr-api-rtr.middlewares=chain-no-auth@file"
+      - "traefik.http.routers.bazarr-api-rtr.service=bazarr-svc"
+
+# # Picard - Music Library Tagging and Management
+#   picard:
+#     <<: *common-keys-apps
+#     image: mikenye/picard
+#     container_name: picard
+#     profiles: ["avedit", "all"]
+# #    ports:
+# #      - "$PICARD_PORT:5800"
+#     volumes:
+#       - $DOWNLOAD_DIR/wip_media:/wip_media:rw
+#       - $DOCKERDIR/picard:/config:rw
+#       - $USERDIR/media/music:/music:rw
+#       - /dev/shm:/dev/shm
+#     environment:
+#       <<: *default-tz-puid-pgid
+#       UMASK: 002
+#       DISPLAY_WIDTH: 1600
+#       DISPLAY_HEIGHT: 960
+#     labels:
+#       - "traefik.enable=true"
+#       - "traefik.http.routers.picard-rtr.entrypoints=https"
+#       - "traefik.http.routers.picard-rtr.rule=Host(`picard.$DOMAINNAME`)"
+#       - "traefik.http.routers.picard-rtr.middlewares=chain-oauth@file"
+#       - "traefik.http.routers.picard-rtr.service=picard-svc"
+#       - "traefik.http.services.picard-svc.loadbalancer.server.port=5800"
 
 # Handbrake - Video Conversion (Transcoding and compression)
   handbrake:
@@ -1383,7 +1248,7 @@ services:
       - /dev/dri:/dev/dri
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.handbrake-rtr.entrypoints=websecure"
+      - "traefik.http.routers.handbrake-rtr.entrypoints=https"
       - "traefik.http.routers.handbrake-rtr.rule=Host(`handbrake.$DOMAINNAME`)"
       - "traefik.http.routers.handbrake-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.handbrake-rtr.service=handbrake-svc"
@@ -1414,11 +1279,73 @@ services:
       - /dev/dri:/dev/dri
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mkvtoolnix-rtr.entrypoints=websecure"
+      - "traefik.http.routers.mkvtoolnix-rtr.entrypoints=https"
       - "traefik.http.routers.mkvtoolnix-rtr.rule=Host(`mkvtoolnix.$DOMAINNAME`)"
       - "traefik.http.routers.mkvtoolnix-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.mkvtoolnix-rtr.service=mkvtoolnix-svc"
       - "traefik.http.services.mkvtoolnix-svc.loadbalancer.server.port=5800"
+
+# # MKVcleaver is a GUI (Graphical User Interface) for mkvtoolnix, designed to extract data from MKV files.
+#   mkvcleaver:
+#     <<: *common-keys-apps
+#     image: jlesage/mkvcleaver
+#     container_name: mkvcleaver
+#     profiles: ["avedit"]
+# #    ports:
+# #      - "$MKVCLEAVER_PORT:5800"
+#     volumes:
+#       - $USERDIR/media:/media:rw
+#       - $DOWNLOAD_DIR:/downloads:rw
+#       - $DOCKERDIR/mkvcleaver/config:/config:rw
+#       - $USERDIR/media/storage:/base_storage:rw
+#     environment:
+#       <<: *default-tz-puid-pgid
+#       UMASK: 002
+#       KEEP_APP_RUNNING: 1
+#       CLEAN_TMP_DIR: 1
+#       DISPLAY_WIDTH: 1600
+#       DISPLAY_HEIGHT: 960
+#       DARK_MODE: 1
+#     devices:
+#       - /dev/dri:/dev/dri
+#     labels:
+#       - "traefik.enable=true"
+#       - "traefik.http.routers.mkvcleaver-rtr.entrypoints=https"
+#       - "traefik.http.routers.mkvcleaver-rtr.rule=Host(`mkvcleaver.$DOMAINNAME`)"
+#       - "traefik.http.routers.mkvcleaver-rtr.middlewares=chain-oauth@file"
+#       - "traefik.http.routers.mkvcleaver-rtr.service=mkvcleaver-svc"
+#       - "traefik.http.services.mkvcleaver-svc.loadbalancer.server.port=5800"
+
+# # MakeMKV - Video Editing (Ripping from Disks)
+#   makemkv:
+#     <<: *common-keys-apps
+#     image: jlesage/makemkv
+#     container_name: makemkv
+#     profiles: ["avedit", "all"]
+# #    ports:
+# #      - "$MAKEMKV_PORT:5800"
+#     volumes:
+#       - $USERDIR/media:/media:rw
+#       - $DOWNLOAD_DIR:/downloads:rw
+#       - $DOCKERDIR/makemkv/config:/config:rw
+#       - $USERDIR/media/storage:/storage:rw
+#       - /mnt/cdrom:/mnt/cdrom
+#     environment:
+#       <<: *default-tz-puid-pgid
+#       UMASK: 002
+#       KEEP_APP_RUNNING: 1
+#       CLEAN_TMP_DIR: 1
+#       DISPLAY_WIDTH: 1600
+#       DISPLAY_HEIGHT: 960
+#     devices:
+#       - /dev/dri:/dev/dri
+#     labels:
+#       - "traefik.enable=true"
+#       - "traefik.http.routers.makemkv-rtr.entrypoints=https"
+#       - "traefik.http.routers.makemkv-rtr.rule=Host(`makemkv.$DOMAINNAME`)"
+#       - "traefik.http.routers.makemkv-rtr.middlewares=chain-oauth@file"
+#       - "traefik.http.routers.makemkv-rtr.service=makemkv-svc"
+#       - "traefik.http.services.makemkv-svc.loadbalancer.server.port=5800"
 
 ############################# UTILITIES
 
@@ -1444,20 +1371,11 @@ services:
         target: /root/.config/glances/glances.pwd
     labels:
       - "traefik.enable=true"
-      # HTTP Routers Auth Bypass
-      - "traefik.http.routers.glances-rtr-bypass.entrypoints=websecure"
-      - "traefik.http.routers.glances-rtr-bypass.rule=Host(`glances.$DOMAINNAME`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.glances-rtr-bypass.priority=100"
-      # HTTP Routers Auth
-      - "traefik.http.routers.glances-rtr.entrypoints=websecure"
+      ## HTTP Routers
+      - "traefik.http.routers.glances-rtr.entrypoints=https"
       - "traefik.http.routers.glances-rtr.rule=Host(`glances.$DOMAINNAME`)"
-      - "traefik.http.routers.glances-rtr.priority=99"
-      # Middlewares
-      - "traefik.http.routers.glances-rtr-bypass.middlewares=chain-no-auth@file"
-      - "traefik.http.routers.glances-rtr.middlewares=chain-no-auth@file"
-      # HTTP Services
+      - "traefik.http.routers.glances-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.glances-rtr.service=glances-svc"
-      - "traefik.http.routers.glances-rtr-bypass.service=glances-svc"
       - "traefik.http.services.glances-svc.loadbalancer.server.port=61208"
 
 # Dozzle - Real-time Docker Log Viewer
@@ -1479,7 +1397,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.dozzle-rtr.entrypoints=websecure"
+      - "traefik.http.routers.dozzle-rtr.entrypoints=https"
       - "traefik.http.routers.dozzle-rtr.rule=Host(`dozzle.$DOMAINNAME`)"
       - "traefik.http.routers.dozzle-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.dozzle-rtr.service=dozzle-svc"
@@ -1500,13 +1418,13 @@ services:
       WATCHTOWER_NO_STARTUP_MESSAGE: "false"
       WATCHTOWER_SCHEDULE: "0 30 12 * * *" # Everyday at 12:30
       # DOCKER_HOST: tcp://socket-proxy:2375 # Use this if you have Socket Proxy enabled.
-      DOCKER_API_VERSION: "1.48"
+      DOCKER_API_VERSION: "1.43"
 
 # Docker-GC - Automatic Docker Garbage Collection 
 # Create docker-gc-exclude file
   dockergc:
     <<: *common-keys-apps
-    image: clockworksoul/docker-gc-cron #reddthebamf/docker-gc-cron
+    image: reddthebamf/docker-gc-cron
     container_name: docker-gc
     profiles: ["infra", "all"]
 #    network_mode: none
@@ -1530,72 +1448,92 @@ services:
     profiles: ["infra", "all"]
 #    command: --restart-containers container1,container2,container3
     volumes:
-      - $DOCKERDIR/traefik3/acme:/traefik:ro
+      - $DOCKERDIR/traefik/acme:/traefik:ro
       - $DOCKERDIR/shared/certs:/output:rw
 #    - /var/run/docker.sock:/var/run/docker.sock:ro # only needed if restarting containers
     environment:
       <<: *default-tz-puid-pgid
       DOMAIN: $DOMAINNAME
 
-# #NextCloud - Cloud based File Storage
-#   nextcloud:
-#     image: linuxserver/nextcloud:latest
-#     container_name: nextcloud
-#     networks:
-#       - default
-#       - t3_proxy
-#     security_opt:
-#       - no-new-privileges:true
-#     restart: unless-stopped
-#     profiles: ["infra", "all"]
-#     volumes:
-#       - $DOCKERDIR/nextcloud/config:/config
-#       - $DOCKERDIR/nextcloud/data:/data
-#       - $USERDIR/media/pictures:/data/media/pictures
-#       - $USERDIR/media/storage/Documents:/data/media/documents
-#     environment:
-#       <<: *default-tz-puid-pgid
-#       REDIS_HOST: nc-redis
-#       NEXTCLOUD_DOMAIN_NAME: nextcloud.$DOMAINNAME
-#       NEXTCLOUD_TRUSTED_DOMAIN: nextcloud.$DOMAINNAME
-#       TRUSTED_PROXIES: $TRAEFIK_NETWORK
-#       FILE__MYSQL_DATABASE: /run/secrets/nc_db_name
-#       FILE__MYSQL_USER: /run/secrets/nc_db_user
-#       FILE__MYSQL_PASSWORD: /run/secrets/nc_db_password
-#       MYSQL_HOST: $MARIADB_HOST
-#       MYSQL_PORT: $MARIADB_PORT
-#       NEXTCLOUD_DATA_DIR: /var/www/html/data
-#       FILE__NEXTCLOUD_ADMIN_USER: /run/secrets/nc_admin_user
-#       FILE__NEXTCLOUD_ADMIN_PASSWORD: /run/secrets/nc_admin_password
-#     secrets:
-#       - nc_admin_password
-#       - nc_admin_user
-#       - nc_db_name
-#       - nc_db_user
-#       - nc_db_password
-#     depends_on:
-#       - nc-redis
-#     labels:
-#       - "traefik.enable=true"
-#       - "traefik.http.routers.nextcloud.entrypoints=websecure"
-#       - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.$DOMAINNAME`)"
-#       - "traefik.http.routers.nextcloud.middlewares=chain-nextcloud@file"
-#       - "traefik.http.routers.nextcloud.service=nextcloud"
-#       - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+## HomeAssistant - Smart Home Hub
+#  homeassistant:
+#    <<: *common-keys-apps
+#    image: homeassistant/home-assistant
+#    container_name: homeassistant
+#    profiles: ["infra", "all"]
+##    ports:
+##     - "$HASS_PORT:8123"
+#    tty: true
+#    volumes:
+#      - $DOCKERDIR/homeassistant:/config
+#      - /etc/localtime:/etc/localtime:ro
+#      - $DOCKERDIR/shared:/shared
+#    environment:
+#      <<: *default-tz-puid-pgid
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.http.routers.homeassistant-rtr.entrypoints=https"
+#      - "traefik.http.routers.homeassistant-rtr.rule=Host(`hass.$DOMAINNAME`)"
+#      - "traefik.http.routers.homeassistant-rtr.middlewares=chain-no-auth@file"
+#      - "traefik.http.routers.homeassistant-rtr.service=homeassistant-svc"
+#      - "traefik.http.services.homeassistant-svc.loadbalancer.server.port=8123"
 
-#   nc-redis:
-#     image: redis:alpine
-#     container_name: nc-redis
-#     hostname: nc-redis
-#     profiles: ["infra", "all"]
-#     networks:
-#       - default
-#     security_opt:
-#       - no-new-privileges:true
-#     restart: unless-stopped
-#     environment:
-#       <<: *default-tz-puid-pgid
-# #      ENABLE_OVERCOMMIT_MEMORY: "true"
+#NextCloud - Cloud based File Storage
+  nextcloud:
+    image: linuxserver/nextcloud:latest
+    container_name: nextcloud
+    networks:
+      - default
+      - t2_proxy
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    profiles: ["infra", "all"]
+    volumes:
+      - $DOCKERDIR/nextcloud/data/config:/config
+      - $DOCKERDIR/nextcloud/data:/data
+      - $DOCKERDIR/nextcloud/data:/var/www/html
+      - $USERDIR/media/pictures:/data/media/pictures:rw
+      - $USERDIR/media/storage/Documents:/data/media/Documents:rw
+    environment:
+      <<: *default-tz-puid-pgid
+      REDIS_HOST: nc-redis
+      NEXTCLOUD_DOMAIN_NAME: nextcloud.$DOMAINNAME
+      NEXTCLOUD_TRUSTED_DOMAIN: nextcloud.$DOMAINNAME
+      TRUSTED_PROXIES: $TRAEFIK_NETWORK
+      FILE__MYSQL_DATABASE: /run/secrets/nc_db_name
+      FILE__MYSQL_USER: /run/secrets/nc_db_user
+      FILE__MYSQL_PASSWORD: /run/secrets/nc_db_password
+      MYSQL_HOST: $MARIADB_HOST
+      MYSQL_PORT: $MARIADB_PORT
+      NEXTCLOUD_DATA_DIR: /var/www/html/data
+      FILE__NEXTCLOUD_ADMIN_USER: /run/secrets/nc_admin_user
+      FILE__NEXTCLOUD_ADMIN_PASSWORD: /run/secrets/nc_admin_password
+    secrets:
+      - nc_admin_password
+      - nc_admin_user
+      - nc_db_name
+      - nc_db_user
+      - nc_db_password
+    depends_on:
+      - nc-redis
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud.entrypoints=https"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.$DOMAINNAME`)"
+      - "traefik.http.routers.nextcloud.middlewares=chain-nextcloud@file"
+      - "traefik.http.routers.nextcloud.service=nextcloud"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+
+  nc-redis:
+    <<: *common-keys-apps
+    image: redis:alpine
+    container_name: nc-redis
+    hostname: nc-redis
+    profiles: ["infra", "all"]
+    environment:
+      <<: *default-tz-puid-pgid
+#      ENABLE_OVERCOMMIT_MEMORY: "true"
 
 # Firefox - Web Broswer
   firefox:
@@ -1620,11 +1558,112 @@ services:
       DISPLAY_HEIGHT: 1080
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.firefox-rtr.entrypoints=websecure"
+      - "traefik.http.routers.firefox-rtr.entrypoints=https"
       - "traefik.http.routers.firefox-rtr.rule=Host(`firefox.$DOMAINNAME`)"
       - "traefik.http.routers.firefox-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.firefox-rtr.service=firefox-svc"
       - "traefik.http.services.firefox-svc.loadbalancer.server.port=5800"
+
+# #TESLAMATE - TeslaMate Logging for Tesla        
+#   teslamate:
+#     <<: *common-keys-apps
+#     image: teslamate/teslamate
+#     container_name: teslamate
+#     profiles: ["infra", "all"]
+#     depends_on:
+#       - postgres
+#     environment:
+#       <<: *default-tz-puid-pgid
+#       ENCRYPTION_KEY: $TESLAMATE_EK
+#       DATABASE_USER: $TESLAMATE_DB_USER
+#       DATABASE_PASS: $TESLAMATE_DB_PASS
+#       DATABASE_NAME: $TESLAMATE_DB
+# #      ENCRYPTION_KEY__FILE: /run/secrets/teslamate_ek
+# #      DATABASE_USER__FILE: /run/secrets/teslamate_db_user
+# #      DATABASE_PASS__FILE: /run/secrets/teslamate_db_password
+# #      DATABASE_NAME__FILE: /run/secrets/teslamate_db_name
+#       DATABASE_HOST: postgres
+#       MQTT_HOST: mosquitto
+#       VIRTUAL_HOST: teslamate.$DOMAINNAME
+#       CHECK_ORIGIN: "true"
+# #    secrets:
+# #      - teslamate_db_name
+# #      - teslamate_db_user
+# #      - teslamate_db_password
+# #      - teslamate_ek
+# #    ports:
+# #      - "$TM_PORT:4000"
+#     volumes:
+#       - $DOCKERDIR/teslamate/import:/opt/app/import
+#     cap_drop:
+#       - all
+#     labels:
+#       - "traefik.enable=true"
+#       - "traefik.http.routers.teslamate-rtr.entrypoints=https"
+#       - "traefik.http.routers.teslamate-rtr.rule=Host(`teslamate.$DOMAINNAME`)"
+#       - "traefik.http.routers.teslamate-rtr.middlewares=chain-oauth@file"
+#       - "traefik.http.routers.teslamate-rtr.service=teslamate-svc"
+#       - "traefik.http.services.teslamate-svc.loadbalancer.server.port=4000"
+
+# # Grafana - TeslaMate
+#   grafanatm:
+#     <<: *common-keys-apps
+#     image: teslamate/grafana
+#     container_name: grafanatm
+#     profiles: ["infra", "all"]
+#     environment:
+#       <<: *default-tz-puid-pgid
+#       DATABASE_HOST: postgres
+#       GRAFANA_PASSWD__FILE: /run/secrets/grafana_pw
+# #      GF_SECURITY_ADMIN_USER__FILE: /run/secrets/grafana_admin_user
+# #      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_pw
+#       GF_AUTH_ANONYMOUS_ENABLED: "false"
+#       GF_AUTH_BASIC_ENABLED: "true"
+#       GF_SERVER_ROOT_URL: "https://grafanatm.$DOMAINNAME"
+#       GF_SERVER_SERVE_FROM_SUB_PATH: "false"
+#       GF_AUTH_PROXY_ENABLED: "true"
+#       GF_AUTH_PROXY_HEADER_NAME: "X-WEBAUTH-USER"
+#       GF_AUTH_PROXY_HEADER_PROPERTY: "username"
+#       GF_AUTH_PROXY_AUTO_SIGN_UP: "true"
+#       GF_AUTH_PROXY_LDAP_SYNC_TTL: 60
+#       GF_AUTH_PROXY_WHITELIST: "$IPWHITELIST"
+#       GF_AUTH_PROXY_HEADERS: "Email:X-User-Email, Name:X-User-Name"
+#       DATABASE_NAME__FILE: /run/secrets/teslamate_db_name
+#       DATABASE_USER__FILE: /run/secrets/teslamate_db_user
+#       DATABASE_PASS__FILE: /run/secrets/teslamate_db_password
+#     secrets:
+#       - teslamate_db_name
+#       - teslamate_db_user
+#       - teslamate_db_password
+# #      - grafana_admin_user
+#       - grafana_pw
+# #      - grafana_admin_pw
+#     volumes:
+#       - $DOCKERDIR/grafanatm/grafana.ini:/etc/grafana/grafana.ini
+#       - teslamate-grafana-data:/var/lib/grafana
+# #    ports:
+# #      - "$GRAFANATM_PORT:3000"
+#     labels:
+#       - "traefik.enable=true"
+#       - "traefik.http.routers.grafanatm-rtr.entrypoints=https"
+#       - "traefik.http.routers.grafanatm-rtr.rule=Host(`grafanatm.$DOMAINNAME`)"
+#       - "traefik.http.routers.grafanatm-rtr.middlewares=chain-oauth@file"
+#       - "traefik.http.routers.grafanatm-rtr.service=grafanatm-svc"
+#       - "traefik.http.services.grafanatm-svc.loadbalancer.server.port=3000"
+
+#   posterr:
+#     <<: *common-keys-apps
+#     image: petersem/posterr
+#     container_name: posterr
+#     profiles: ["media", "all"]
+#     ports:
+#       - $POSTERR_PORT:3000
+#     environment:
+#       <<: *default-tz-puid-pgid
+# #      BASEPATH: ""
+#     volumes:
+#       - $DOCKERDIR/posterr/config:/usr/src/app/config
+#       - $DOCKERDIR/posterr/custom:/usr/src/app/public/custom
 
 # VSCode - VSCode Editing
   vscode:
@@ -1650,7 +1689,7 @@ services:
 #      DEFAULT_WORKSPACE: /config/data/User/Workspaces/AZ.code-workspace #optional
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.vscode-rtr.entrypoints=websecure"
+      - "traefik.http.routers.vscode-rtr.entrypoints=https"
       - "traefik.http.routers.vscode-rtr.rule=Host(`code.$DOMAINNAME`)"
       - "traefik.http.routers.vscode-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.vscode-rtr.service=vscode-svc"
@@ -1664,50 +1703,40 @@ services:
     restart: unless-stopped
     profiles: ["infra", "all"]
     networks:
-      - t3_proxy
+      - t2_proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.whoami-rtr.entrypoints=websecure"
+      - "traefik.http.routers.whoami-rtr.entrypoints=https"
       - "traefik.http.routers.whoami-rtr.rule=Host(`whoami.$DOMAINNAME`)"
       - "traefik.http.routers.whoami-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.whoami-rtr.service=whoami-svc"
       - "traefik.http.services.whoami-svc.loadbalancer.server.port=80"
 
-  hdhr-ac4:
-    <<: *common-keys-apps
-    image: ghcr.io/johnb-7/hdhr-ac4:1.5
-    container_name: hdhr-ac4
-    profiles: ["infra", "all"]
-    # networks:
-    #   - t3_proxy
-    ports:
-      - "8082:80"
-      - "5004:5004"
-    environment:
-      <<: *default-tz-puid-pgid
-      HDHR_IP: $HDHOMERUN_IP
-      HOST_IP: $SERVER_IP
-      DEVICEID_SWAP: 1
-
-  threadfin:
-    <<: *common-keys-apps
-    image: fyb3roptik/threadfin
-    container_name: threadfin
-    ports:
-      - $THREADFIN_PORT:34400
-    environment:
-      <<: *default-tz-puid-pgid
-    volumes:
-      - $DOCKERDIR/threadfin/conf:/home/threadfin/conf
-      - $USERDIR/media/threadfin/temp:/tmp/threadfin:rw
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.threadfin-rtr.entrypoints=websecure"
-      - "traefik.http.routers.threadfin-rtr.rule=Host(`threadfin.$DOMAINNAME`)"
-      - "traefik.http.routers.threadfin-rtr.middlewares=chain-oauth@file"
-      - "traefik.http.routers.threadfin-rtr.service=threadfin-svc"
-      - "traefik.http.services.threadfin-svc.loadbalancer.server.port=34400"
+# # NetbootXYZ PXE Boot Service
+#   netbootxyz:
+#     <<: *common-keys-core
+#     image: lscr.io/linuxserver/netbootxyz:latest
+#     container_name: netbootxyz
+#     profiles: ["infra","all"]
+#     environment:
+#       <<: *default-tz-puid-pgid
+# #      MENU_VERSION: 1.9.9
+#       PORT_RANGE: 30000:30010
+#       SUBFOLDER: /
+#     volumes:
+#       - $DOCKERDIR/netbootxyz/config:/config
+#       - $DOCKERDIR/netbootxyz/assets:/assets #optional
+#     ports:
+#       - 3000:3000
+#       - 69:69/udp
+# #      - 8080:80 #optional
+#     labels:
+#       - "traefik.enable=true"
+#       - "traefik.http.routers.netbootxyz-rtr.entrypoints=https"
+#       - "traefik.http.routers.netbootxyz-rtr.rule=Host(`netbootxyz.$DOMAINNAME`)"
+#       - "traefik.http.routers.netbootxyz-rtr.middlewares=chain-oauth@file"
+#       - "traefik.http.routers.vnetbootxyz-rtr.service=netbootxyz-svc"
+#       - "traefik.http.services.netbootxyz-svc.loadbalancer.server.port=3000"
 
 volumes:
   teslamate-grafana-data:

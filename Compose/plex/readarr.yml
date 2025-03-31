@@ -5,6 +5,8 @@ services:
     image: linuxserver/readarr:nightly
     container_name: readarr
     profiles: ["media", "all"]
+#    ports:
+#      - "$READARR_PORT:8989"
     volumes:
       - $DOCKERDIR/readarr/config:/config:Z
       - $DOWNLOAD_DIR:/downloads
@@ -13,15 +15,18 @@ services:
       <<: *default-tz-puid-pgid
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.readarr-rtr.entrypoints=https"
-      - "traefik.http.routers.readarr-rtr.priority=99"
+      # HTTP Routers Auth Bypass
+      - "traefik.http.routers.readarr-rtr-bypass.entrypoints=websecure"
+      - "traefik.http.routers.readarr-rtr-bypass.rule=Host(`readarr.$DOMAINNAME`) && (Header(`X-Api-Key`, `$READARR_API`) || Query(`apikey`, `$READARR_API`))"
+      - "traefik.http.routers.readarr-rtr-bypass.priority=100"
+      # HTTP Routers Auth
+      - "traefik.http.routers.readarr-rtr.entrypoints=websecure"
       - "traefik.http.routers.readarr-rtr.rule=Host(`readarr.$DOMAINNAME`)"
+      - "traefik.http.routers.readarr-rtr.priority=99"
+      # Middlewares
+      - "traefik.http.routers.readarr-rtr-bypass.middlewares=chain-no-auth@file"
       - "traefik.http.routers.readarr-rtr.middlewares=chain-oauth@file"
+      # HTTP Services
       - "traefik.http.routers.readarr-rtr.service=readarr-svc"
+      - "traefik.http.routers.readarr-rtr-bypass.service=readarr-svc"
       - "traefik.http.services.readarr-svc.loadbalancer.server.port=8787"
-      # API ROUTER - Allow access to API without auth for 3rd party app access
-      - "traefik.http.routers.readarr-api-rtr.entrypoints=https"
-      - "traefik.http.routers.readarr-api-rtr.priority=100"
-      - "traefik.http.routers.readarr-api-rtr.rule=Host(`READARR.$DOMAINNAME`) && (Headers(`X-Api-Key`, `$READARR_API`) || Query(`apikey=$READARR_API`))"
-      - "traefik.http.routers.readarr-api-rtr.middlewares=chain-no-auth@file"
-      - "traefik.http.routers.readarr-api-rtr.service=readarr-svc"

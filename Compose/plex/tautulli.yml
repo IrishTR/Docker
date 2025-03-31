@@ -9,9 +9,11 @@ services:
 #      - "$TAUTULLI_PORT:8181"
     volumes:
       - $DOCKERDIR/tautulli/config:/config
-      - $DOCKERDIR/Plex/DB/Library/Application Support/Plex Media Server/Logs:/logs:ro
+      - $DOCKERDIR/tautulli/logs:/logs:ro
     environment:
       <<: *default-tz-puid-pgid
+    depends_on:
+      - plex
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.tautulli-rtr.entrypoints=websecure"

@@ -13,9 +13,9 @@ services:
     environment:
       <<: *default-tz-puid-pgid
     labels:
-     - "traefik.enable=true"
-     - "traefik.http.routers.hydra-rtr.entrypoints=websecure"
-     - "traefik.http.routers.hydra-rtr.rule=Host(`hydra.$DOMAINNAME`)"
-     - "traefik.http.routers.hydra-rtr.middlewares=chain-oauth@file"
-     - "traefik.http.routers.hydra-rtr.service=hydra-svc"
-     - "traefik.http.services.hydra-svc.loadbalancer.server.port=5076"
+      - "traefik.enable=true"
+      - "traefik.http.routers.hydra-rtr.entrypoints=websecure"
+      - "traefik.http.routers.hydra-rtr.rule=Host(`hydra.$DOMAINNAME`)"
+      - "traefik.http.routers.hydra-rtr.middlewares=chain-oauth@file"
+      - "traefik.http.routers.hydra-rtr.service=hydra-svc"
+      - "traefik.http.services.hydra-svc.loadbalancer.server.port=5076"

@@ -1,0 +1,21 @@
+services:
+  threadfin:
+    <<: *common-keys-apps
+    image: fyb3roptik/threadfin
+    container_name: threadfin
+    ports:
+      - 34400:34400
+    environment:
+      <<: *default-tz-puid-pgid
+    volumes:
+      - $DOCKERDIR/threadfin/conf:/home/threadfin/conf
+      - $USERDIR/media/threadfin/temp:/tmp/threadfin:rw
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.threadfin-rtr.entrypoints=websecure"
+      - "traefik.http.routers.threadfin-rtr.rule=Host(`threadfin.$DOMAINNAME`)"
+      - "traefik.http.routers.threadfin-rtr.middlewares=chain-oauth@file,add-threadfin"
+      - "traefik.http.middlewares.add-threadfin.addPrefix.prefix=/web"
+      - "traefik.http.routers.threadfin-rtr.service=threadfin-svc"
+      - "traefik.http.services.threadfin-svc.loadbalancer.server.port=34400"

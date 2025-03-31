@@ -15,15 +15,18 @@ services:
       <<: *default-tz-puid-pgid
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mylar-rtr.entrypoints=https"
-      - "traefik.http.routers.mylar-rtr.priority=99"
+      # HTTP Routers Auth Bypass
+      - "traefik.http.routers.mylar-rtr-bypass.entrypoints=websecure"
+      - "traefik.http.routers.mylar-rtr-bypass.rule=Host(`mylar.$DOMAINNAME`) && (Header(`X-Api-Key`, `$MYLAR_API`) || Query(`apikey`, `$MYLAR_API`))"
+      - "traefik.http.routers.mylar-rtr-bypass.priority=100"
+      # HTTP Routers Auth
+      - "traefik.http.routers.mylar-rtr.entrypoints=websecure"
       - "traefik.http.routers.mylar-rtr.rule=Host(`mylar.$DOMAINNAME`)"
+      - "traefik.http.routers.mylar-rtr.priority=99"
+      # Middlewares
+      - "traefik.http.routers.mylar-rtr-bypass.middlewares=chain-no-auth@file"
       - "traefik.http.routers.mylar-rtr.middlewares=chain-oauth@file"
+      # HTTP Services
       - "traefik.http.routers.mylar-rtr.service=mylar-svc"
+      - "traefik.http.routers.mylar-rtr-bypass.service=mylar-svc"
       - "traefik.http.services.mylar-svc.loadbalancer.server.port=8090"
-      # API ROUTER - Allow access to API without auth for 3rd party app access
-      - "traefik.http.routers.mylar-api-rtr.entrypoints=https"
-      - "traefik.http.routers.mylar-api-rtr.priority=100"
-      - "traefik.http.routers.mylar-api-rtr.rule=Host(`mylar.$DOMAINNAME`) && (Headers(`X-Api-Key`, `$MYLAR_API`) || Query(`apikey=$MYLAR_API`))"
-      - "traefik.http.routers.mylar-api-rtr.middlewares=chain-no-auth@file"
-      - "traefik.http.routers.mylar-api-rtr.service=mylar-svc"

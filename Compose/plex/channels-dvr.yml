@@ -1,0 +1,23 @@
+services:
+  channels-dvr:
+    <<: *common-keys-apps
+    image: fancybits/channels-dvr:latest
+    container_name: channels-dvr
+    profiles: ["infra", "all"]
+    networks:
+      - t3_proxy
+    ports:
+      - "8089:8089"
+    restart: on-failure:10
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - $DOCKERDIR/channels-dvr/config:/channels-dvr
+      - $USERDIR/media/dvr:/shares/DVR
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.channels-rtr.entrypoints=websecure"
+      - "traefik.http.routers.channels-rtr.rule=Host(`channelsdvr.$DOMAINNAME`)"
+      - "traefik.http.routers.channels-rtr.middlewares=chain-oauth@file"
+      - "traefik.http.routers.channels-rtr.service=channels-svc"
+      - "traefik.http.services.channels-svc.loadbalancer.server.port=8089"

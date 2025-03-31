@@ -17,9 +17,8 @@ services:
     labels:
       - "traefik.enable=true"
       # HTTP Routers Auth Bypass
-      - "traefik.http.routers.bazarr-rtr-bypass.entrypoints=https"
+      - "traefik.http.routers.bazarr-rtr-bypass.entrypoints=websecure"
       - "traefik.http.routers.bazarr-rtr-bypass.rule=Host(`bazarr.$DOMAINNAME`) && (Header(`X-Api-Key`, `$BAZARR_API`) || Query(`apikey`, `$BAZARR_API`))"
-      #- "traefik.http.routers.bazarr-rtr-bypass.rule=Host(`bazarr.$DOMAINNAME`) && Header(`traefik-auth-bypass-key`, `$TRAEFIK_AUTH_BYPASS_KEY`)" # Bypass Auth for LunaSea on iOS
       - "traefik.http.routers.bazarr-rtr-bypass.priority=100"
       # HTTP Routers Auth
       - "traefik.http.routers.bazarr-rtr.entrypoints=websecure"

@@ -1,10 +1,10 @@
 services:
-# Logitech Media Server - Music Server
+# LMS - Music Server
   lms:
     <<: *common-keys-apps
-    image: reddthebamf/lms:8.4.0
+    image: lmscommunity/logitechmediaserver:8.5.3
+#     image: reddthebamf/lms:8.4.0
     container_name: lms
-#    image: larsks/logitech-media-server
     profiles: ["media", "all"]
     ports:
       - "$LMS_PORT1:9000"
@@ -20,7 +20,7 @@ services:
       JAVA_OPTS: -Dserver.use-forward-headers=true
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.lms-rtr.entrypoints=https"
+      - "traefik.http.routers.lms-rtr.entrypoints=websecure"
       - "traefik.http.routers.lms-rtr.rule=Host(`lms.$DOMAINNAME`)"
       - "traefik.http.routers.lms-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.lms-rtr.service=lms-svc"

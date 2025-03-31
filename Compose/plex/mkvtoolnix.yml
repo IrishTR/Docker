@@ -11,7 +11,7 @@ services:
       - $USERDIR/media:/media:rw
       - $DOWNLOAD_DIR:/downloads:rw
       - $DOCKERDIR/mkvtoolnix/config:/config:rw
-      - $DOCKERDIR/mkvtoolnix/:/config/certs
+      - $USERDIR/media/storage:/base_storage:rw
     environment:
       <<: *default-tz-puid-pgid
       UMASK: 002
@@ -20,6 +20,8 @@ services:
       DISPLAY_WIDTH: 1600
       DISPLAY_HEIGHT: 960
       DARK_MODE: 1
+    devices:
+      - /dev/dri:/dev/dri
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mkvtoolnix-rtr.entrypoints=websecure"

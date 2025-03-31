@@ -11,11 +11,10 @@ services:
     restart: unless-stopped
     profiles: ["infra", "all"]
     volumes:
-      - $DOCKERDIR/nextcloud/data/config:/config
+      - $DOCKERDIR/nextcloud/config:/config
       - $DOCKERDIR/nextcloud/data:/data
-      - $DOCKERDIR/nextcloud/data:/var/www/html
-      - $USERDIR/media/pictures:/data/media/pictures:rw
-      - $USERDIR/media/storage/Documents:/data/media/Documents:rw
+      - $USERDIR/media/pictures:/data/media/pictures
+      - $USERDIR/media/storage/Documents:/data/media/documents
     environment:
       <<: *default-tz-puid-pgid
       REDIS_HOST: nc-redis
@@ -40,18 +39,22 @@ services:
       - nc-redis
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.nextcloud.entrypoints=https"
+      - "traefik.http.routers.nextcloud.entrypoints=websecure"
       - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.$DOMAINNAME`)"
       - "traefik.http.routers.nextcloud.middlewares=chain-nextcloud@file"
       - "traefik.http.routers.nextcloud.service=nextcloud"
       - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
 
   nc-redis:
-    <<: *common-keys-apps
     image: redis:alpine
     container_name: nc-redis
     hostname: nc-redis
     profiles: ["infra", "all"]
+    networks:
+      - default
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
     environment:
       <<: *default-tz-puid-pgid
 #      ENABLE_OVERCOMMIT_MEMORY: "true"

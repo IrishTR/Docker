@@ -31,4 +31,26 @@ http:
       entryPoints:
         - websecure
       middlewares:
-        - chain-no-auth
+        - chain-oauth
+
+    batocerapi5-rtr:
+      rule: Host(`batocerapi5.{{env "DOMAINNAME"}}`)
+      service: batocerapi5-svc
+      priority: 1000
+      tls:
+        certresolver: dns-cloudflare
+      entryPoints:
+        - websecure
+      middlewares:
+        - chain-oauth
+
+    batocerapi4b-rtr:
+      rule: Host(`batocerapi4b.{{env "DOMAINNAME"}}`)
+      service: batocerapi4b-svc
+      priority: 1000
+      tls:
+        certresolver: dns-cloudflare
+      entryPoints:
+        - websecure
+      middlewares:
+        - chain-oauth

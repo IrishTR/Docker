@@ -1,12 +1,12 @@
 services:
 # Homepage - Application Dashboard
   homepage:
-    image: ghcr.io/benphelps/homepage:latest
+    image: ghcr.io/gethomepage/homepage:latest
     container_name: homepage
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
-    profiles: ["apps", "all"]
+    profiles: ["infra", "all"]
     networks:
       - t3_proxy
     # ports:
@@ -14,16 +14,24 @@ services:
     volumes:
       - $DOCKERDIR/homepage:/app/config
       - /var/run/docker.sock:/var/run/docker.sock:ro # pass local proxy
+      - $USERDIR/media:/media
     environment:
       TZ: $TZ
       PUID: $PUID
-      PGID: $PGID
+      PGID: 999
       HOMEPAGE_VAR_DOMAINNAME: $DOMAINNAME
       HOMEPAGE_VAR_HDHOMERUN_IP: $HDHOMERUN_IP
       HOMEPAGE_VAR_SERVER_IP: $SERVER_IP
+      HOMEPAGE_VAR_ROUTER_IP: $ROUTER_IP
       HOMEPAGE_VAR_PLEX_PORT: $PLEX_PORT
+      HOMEPAGE_VAR_HOMEPAGE_LABEL: $HOMEPAGE_LABEL
+      HOMEPAGE_VAR_HOMEPAGE_LAT: $HOMEPAGE_LAT
+      HOMEPAGE_VAR_HOMEPAGE_LONG: $HOMEPAGE_LONG
+      HOMEPAGE_VAR_HOMEPAGE_TZ: $TZ
+      HOMEPAGE_FILE_HPUSERNAME: /run/secrets/hpusername
+      HOMEPAGE_FILE_HPPASSWORD: /run/secrets/hppassword
+      HOMEPAGE_FILE_GLANCES_PASS: /run/secrets/glances_pass
       HOMEPAGE_FILE_PLEX_TOKEN: /run/secrets/plex_token
-      HOMEPAGE_FILE_GLANCES_PASSWORD: /run/secrets/glances_password
       HOMEPAGE_FILE_PORTAINER_KEY: /run/secrets/portainer_key
       HOMEPAGE_FILE_TRANSMISSION_RPC_PASSWORD: /run/secrets/transmission_rpc_password
       HOMEPAGE_FILE_TRANSMISSION_RPC_USERNAME: /run/secrets/transmission_rpc_username
@@ -34,12 +42,13 @@ services:
       HOMEPAGE_FILE_TAUTULLI_API: /run/secrets/tautulli_api
       HOMEPAGE_FILE_SABNZBD_API: /run/secrets/sabnzbd_api
       HOMEPAGE_FILE_BAZARR_API: /run/secrets/bazarr_api
-      HOMEPAGE_FILE_OMBI_API: /run/secrets/ombi_api
       HOMEPAGE_FILE_READARR_API: /run/secrets/readarr_api
       HOMEPAGE_FILE_MYLAR_API: /run/secrets/mylar_api
     secrets:
+      - hpusername
+      - hppassword
       - portainer_key
-      - glances_password
+      - glances_pass
       - plex_token
       - transmission_rpc_password
       - transmission_rpc_username
