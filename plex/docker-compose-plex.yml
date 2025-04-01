@@ -24,7 +24,7 @@ networks:
 ########################### SECRETS
 secrets:
   basic_auth_credentials:
-    file: $DOCKERDIR/secrets/basic_auth_credentials
+    file: $DOCKERDIR/secrets/htpasswd
   cf_dns_api_token:
     file: $DOCKERDIR/secrets/cf_dns_api_token
   authelia_jwt_secret:
@@ -45,14 +45,14 @@ secrets:
     file: $DOCKERDIR/secrets/plex_token
   mysql_root_password:
     file: $DOCKERDIR/secrets/mysql_root_password
-  teslamate_db_name:
-    file: $DOCKERDIR/secrets/teslamate_db_name
-  teslamate_db_user:
-    file: $DOCKERDIR/secrets/teslamate_db_user
-  teslamate_db_password:
-    file: $DOCKERDIR/secrets/teslamate_db_password
-  teslamate_ek:
-    file: $DOCKERDIR/secrets/teslamate_ek
+  # teslamate_db_name:
+  #   file: $DOCKERDIR/secrets/teslamate_db_name
+  # teslamate_db_user:
+  #   file: $DOCKERDIR/secrets/teslamate_db_user
+  # teslamate_db_password:
+  #   file: $DOCKERDIR/secrets/teslamate_db_password
+  # teslamate_ek:
+  #   file: $DOCKERDIR/secrets/teslamate_ek
   transmission_rpc_username:
     file: $DOCKERDIR/secrets/transmission_rpc_username
   transmission_rpc_password:
@@ -67,22 +67,22 @@ secrets:
     file: $DOCKERDIR/secrets/http_password
   http_username:
     file: $DOCKERDIR/secrets/http_username
-  nc_db_name:
-    file: $DOCKERDIR/secrets/nc_db_name
-  nc_db_user:
-    file: $DOCKERDIR/secrets/nc_db_user
-  nc_db_password:
-    file: $DOCKERDIR/secrets/nc_db_password
-  nc_admin_user:
-    file: $DOCKERDIR/secrets/nc_admin_user
-  nc_admin_password:
-    file: $DOCKERDIR/secrets/nc_admin_password
-  grafana_admin_user:
-    file: $DOCKERDIR/secrets/grafana_admin_user
-  grafana_pw:
-    file: $DOCKERDIR/secrets/grafana_pw
-  grafana_admin_pw:
-    file: $DOCKERDIR/secrets/grafana_admin_pw
+  # nc_db_name:
+  #   file: $DOCKERDIR/secrets/nc_db_name
+  # nc_db_user:
+  #   file: $DOCKERDIR/secrets/nc_db_user
+  # nc_db_password:
+  #   file: $DOCKERDIR/secrets/nc_db_password
+  # nc_admin_user:
+  #   file: $DOCKERDIR/secrets/nc_admin_user
+  # nc_admin_password:
+  #   file: $DOCKERDIR/secrets/nc_admin_password
+  # grafana_admin_user:
+  #   file: $DOCKERDIR/secrets/grafana_admin_user
+  # grafana_pw:
+  #   file: $DOCKERDIR/secrets/grafana_pw
+  # grafana_admin_pw:
+  #   file: $DOCKERDIR/secrets/grafana_admin_pw
   cf_email:
     file: $DOCKERDIR/secrets/cf_email
   cf_api_key:
@@ -157,10 +157,10 @@ include:
   - compose/$HOSTNAME/crowdsec.yml
   - compose/$HOSTNAME/traefik-bouncer.yml
   # FRONTEND
-  - compose/$HOSTNAME/autoindex.yml
+  # - compose/$HOSTNAME/autoindex.yml
   - compose/$HOSTNAME/homepage.yml
   - compose/$HOSTNAME/phpmyadmin.yml
-  - compose/$HOSTNAME/sitespeed.yml
+  # - compose/$HOSTNAME/sitespeed.yml
   - compose/$HOSTNAME/whoami.yml
   # DOWNLOADERS
   # - compose/$HOSTNAME/jdownloader.yml
@@ -176,10 +176,10 @@ include:
   - compose/$HOSTNAME/bazarr.yml
   # - compose/$HOSTNAME/picard.yml
   # MONITORING
-  - compose/$HOSTNAME/grafana.yml
-  - compose/$HOSTNAME/uptime-kuma.yml
+  # - compose/$HOSTNAME/grafana.yml
+  # - compose/$HOSTNAME/uptime-kuma.yml
   - compose/$HOSTNAME/dozzle.yml
-  - compose/$HOSTNAME/scrutiny.yml
+  # - compose/$HOSTNAME/scrutiny.yml
   # - compose/$HOSTNAME/radarr-exporter.yml
   # - compose/$HOSTNAME/sonarr-exporter.yml
   # - compose/$HOSTNAME/lidarr-exporter.yml
@@ -192,11 +192,10 @@ include:
   - compose/$HOSTNAME/it-tools.yml
   # UTILITIES
   - compose/$HOSTNAME/firefox.yml
-  - compose/$HOSTNAME/firefly.yml
   # FILE MANAGEMENT
   - compose/$HOSTNAME/vscode.yml
   # NETWORK
-  # - compose/$HOSTNAME/gluetun.yml
+  - compose/$HOSTNAME/gluetun.yml
   # MAINTENANCE
   - compose/$HOSTNAME/docker-gc.yml
   - compose/$HOSTNAME/deunhealth.yml
