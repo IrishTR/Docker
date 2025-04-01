@@ -1,0 +1,41 @@
+---
+#
+# For more information see: https://gethomepage.dev/latest/widgets
+#
+
+- greeting:
+  text_size: xl
+  text: Welcome to The Redways Server
+
+- resources:
+    expanded: true
+    cpu: true
+    memory: true
+#    uptime: true
+    refresh: 1000
+    disk:
+      - /
+      - /media
+
+- search:
+    provider: google
+    target: _blank
+
+- unifi_console:
+    url: https://{{HOMEPAGE_VAR_ROUTER_IP}}
+    username: {{HOMEPAGE_FILE_HPUSERNAME}}
+    password: {{HOMEPAGE_FILE_HPPASSWORD}}
+
+- openmeteo:
+    label: {{HOMEPAGE_VAR_HOMEPAGE_LABEL}}
+    latitude: {{HOMEPAGE_VAR_HOMEPAGE_LAT}}
+    longitude: {{HOMEPAGE_VAR_HOMEPAGE_LONG}}
+    timezone: {{HOMEPAGE_VAR_HOMEPAGE_TZ}}
+    units: imperial
+    cache: 5
+
+- datetime:
+    text_size: sm
+    format:
+      timeStyle: short
+      dateStyle: short

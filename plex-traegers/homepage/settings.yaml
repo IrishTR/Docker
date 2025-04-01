@@ -1,0 +1,45 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/latest/configs/settings
+title: Plex-Traeger Server
+background: https://images.unsplash.com/photo-1502790671504-542ad42d5189?auto=format&fit=crop&w=2560&q=80
+theme: dark
+color: slate
+backgroundOpacity: 0.6
+cardBlur: md # or sm, lg
+headerStyle: clean
+useEqualHeights: true
+disableCollapse: true
+# hideVersion: false
+hideErrors: true
+#showStats: true
+statusStyle: "dot"
+quicklaunch:
+  searchDescriptions: true
+  hideInternetSearch: true
+  hideVisitURL: true
+layout:
+  Media Server:
+    style: row
+    columns: 2
+  Calendar:
+    style: row
+    columns: 1
+  ARRs:
+    style: row
+    columns: 4
+  Downloaders:
+    style: row
+    columns: 4
+  Utilities:
+    style: row
+    columns: 5
+  Docker Utilities:
+    style: row
+    columns: 3
+  Monitoring & Logs:
+    style: row
+    columns: 2
+providers:
+  openweathermap: openweathermapapikey
+  weatherapi: weatherapiapikey

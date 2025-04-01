@@ -1,0 +1,261 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/latest/configs/services
+- Calendar:
+    - Calendar:
+        widget:
+          type: calendar
+          firstDayInWeek: sunday
+          view: monthly
+          maxEvents: 10
+          showTime: true
+          integrations:
+            - type: radarr
+              service_group: ARRs
+              service_name: Radarr
+              color: amber
+              params:
+                unmonitored: true
+            - type: sonarr
+              service_group: ARRs
+              service_name: Sonarr
+              color: teal
+              params:
+                unmonitored: true
+- ARRs:
+    - Radarr:
+        icon: radarr.png
+        href: https://radarr.{{HOMEPAGE_VAR_DOMAINNAME}}/radarr
+        description: Movies Management
+        server: my-docker
+        container: radarr
+        widget:
+            type: radarr
+            url: http://radarr:7878
+            key: {{HOMEPAGE_FILE_RADARR_API}}
+    - Sonarr:
+        icon: sonarr.png
+        href: https://sonarr.{{HOMEPAGE_VAR_DOMAINNAME}}/sonarr
+        description: Series Management
+        server: my-docker
+        container: sonarr
+        widget:
+            type: sonarr
+            url: http://sonarr:8989
+            key: {{HOMEPAGE_FILE_SONARR_API}}
+    - Lidarr:
+        icon: lidarr.png
+        href: https://lidarr.{{HOMEPAGE_VAR_DOMAINNAME}}/lidarr
+        description: Music Management
+        server: my-docker
+        container: lidarr
+        widget:
+            type: lidarr
+            url: http://lidarr:8686
+            key: {{HOMEPAGE_FILE_LIDARR_API}}
+    - Bazarr:
+        icon: bazarr.png
+        href: https://bazarr.{{HOMEPAGE_VAR_DOMAINNAME}}/bazarr
+        description: Subtitle Management
+        server: my-docker
+        container: bazarr
+        widget:
+            type: bazarr
+            url: http://bazarr:6767
+            key: {{HOMEPAGE_FILE_BAZARR_API}}
+    - Readarr:
+        icon: readarr.png
+        href: https://readarr.{{HOMEPAGE_VAR_DOMAINNAME}}/readarr
+        description: Book Management
+        server: my-docker
+        container: readarr
+        widget:
+            type: readarr
+            url: http://readarr:8787
+            key: {{HOMEPAGE_FILE_READARR_API}}
+    - Mylar:
+        icon: mylar.png
+        href: https://mylar.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: Comic Book Management
+        server: my-docker
+        container: mylar
+        widget:
+            type: mylar
+            url: http://mylar:8090
+            key: {{HOMEPAGE_FILE_MYLAR_API}}
+    - Prowlarr:
+        icon: prowlarr.png
+        href: https://prowlarr.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: Indexer Management
+        server: my-docker
+        container: prowlarr
+        widget:
+            type: prowlarr
+            url: http://prowlarr:9696
+            key: {{HOMEPAGE_FILE_PROWLARR_API}}
+
+- Downloaders:
+    - SabNZBD:
+        icon: sabnzbd.png
+        href: https://sabnzbd.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: NZB Downloader
+        server: my-docker
+        container: sabnzbd
+        widget:
+            type: sabnzbd
+            url: http://sabnzbd:8080
+            key: {{HOMEPAGE_FILE_SABNZBD_API}}
+    - Qbittorrent:
+        icon: qbittorrent.png
+        href: https://qbit.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: Torrent Downloader
+        server: my-docker
+        container: gluetun
+        widget:
+            type: qbittorrent
+            url: http://gluetun:8080
+            username: {{HOMEPAGE_VAR_GLUETUNUSER}}
+            password: {{HOMEPAGE_VAR_GLUETUNPASS}}
+    # - Transmission:
+    #     icon: transmission.png
+    #     href: https://transmission.{{HOMEPAGE_VAR_DOMAINNAME}}
+    #     description: Torrent Downloader
+    #     server: my-docker
+    #     container: transmission
+    #     widget:
+    #         type: transmission
+    #         url: http://transmission:9091
+    #         username: {{HOMEPAGE_FILE_TRANSMISSION_RPC_USERNAME}}
+    #         password: {{HOMEPAGE_FILE_TRANSMISSION_RPC_PASSWORD}}
+    #         rpcUrl: /transmission/rpc/ # Optional. Matches the value of "rpc-url" in your Transmission's settings.json file
+    - MeTube:
+        icon: youtube.png
+        href: https://metube.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: Youtube Downloader
+        server: my-docker
+        container: metube
+    - Ombi:
+        icon: ombi.png
+        href: https://ombi.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: PVR User Tools
+        server: my-docker
+        container: ombi
+        widget:
+            type: ombi
+            url: http://ombi:3579
+            key: {{HOMEPAGE_FILE_OMBI_API}}
+
+- Media Server:
+    - Plex:
+        icon: plex.png
+        href: https://plex.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: Watch movies and TV shows
+        server: my-docker
+        container: plex
+        widget:
+            type: plex
+            url: http://{{HOMEPAGE_VAR_SERVER_IP}}:{{HOMEPAGE_VAR_PLEX_PORT}}
+            key: {{HOMEPAGE_FILE_PLEX_TOKEN}}
+    - Tautulli:
+        icon: tautulli.png
+        href: https://tautulli.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: Plex Dashboard Management
+        server: my-docker
+        container: tautulli
+        widget:
+            type: tautulli
+            url: http://tautulli:8181
+            key: {{HOMEPAGE_FILE_TAUTULLI_API}}
+
+- Utilities:
+    - Guacamole:
+        icon: guacamole.png
+        href: https://guac.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: Remote Desktop Management
+        server: my-docker
+        container: guacamole
+    - VSCode:
+        icon: vscode.png
+        href: https://code.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: Visual Studio Code
+        server: my-docker
+        container: vscode
+    - MKVToolnix:
+        icon: mkvtoolnix.png
+        href: https://mkvtoolnix.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: Matroska Tools
+        server: my-docker
+        container: mkvtoolnix
+    - MKVCleaver:
+        icon: mkvtoolnix.png
+        href: https://mkvcleaver.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: Matroska Tools
+        server: my-docker
+        container: mkvcleaver
+    - MakeMKV:
+        icon: makemkv.png
+        href: https://makemkv.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: BluRay/DVD Ripper
+        server: my-docker
+        container: makemkv
+    - Handbrake:
+        icon: handbrake.png
+        href: https://handbrake.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: Video Encoding Tools
+        server: my-docker
+        container: handbrake
+        
+- Docker Utilities:
+    - Traefik:
+        icon: traefik.png
+        href: https://traefik.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: Reverse Proxy Management
+        server: my-docker
+        container: traefik
+        # widget:
+        #     type: traefik
+        #     url: http://traefik:8080
+        #     username: {{HOMEPAGE_FILE_TRAEFIK_USERNAME}} # optional
+        #     password: {{HOMEPAGE_FILE_TRAEFIK_PASSWORD}} # optional
+    - Portainer:
+        icon: portainer.png
+        href: https://portainer.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: Docker Container Management
+        server: my-docker
+        container: portainer
+        widget:
+            type: portainer
+            url: http://portainer:9000
+            env: 1
+            key: {{HOMEPAGE_FILE_PORTAINER_KEY}}
+    - phpMyAdmin:
+        icon: phpmyadmin.png
+        href: https://pma.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: MYSQL DB Management
+        server: my-docker
+        container: phpmyadmin
+
+- Monitoring & Logs:
+    - Glances:
+        icon: glances.png
+        href: https://glances.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: System Information
+        server: my-docker
+        container: glances
+        # widget:
+        #     type: glances
+        #     url: http://glances:61208
+        #     username: glances # optional if auth enabled in Glances
+        #     password: {{HOMEPAGE_FILE_GLANCES_PASS}} # optional if auth enabled in Glances
+        #     version: 4 # required only if running glances v4 or higher, defaults to 3
+        #     metric: network:eth0 #enp2s0
+        #     chart: true
+        #     diskUnits: bytes # optional, bytes (default) or bbytes. Only applies to disk
+        #     refreshInterval: 5000 # optional - in milliseconds, defaults to 1000 or more, depending on the metric
+        #     pointsLimit: 15 # optional, defaults to 15
+    - Dozzle:
+        icon: dozzle.png
+        href: https://dozzle.{{HOMEPAGE_VAR_DOMAINNAME}}
+        description: Docker Logs
+        server: my-docker
+        container: dozzle
