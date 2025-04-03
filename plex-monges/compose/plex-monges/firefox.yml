@@ -23,7 +23,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.firefox-rtr.entrypoints=websecure"
-      - "traefik.http.routers.firefox-rtr.rule=Host(`firefox.$DOMAINNAME`)"
+      - "traefik.http.routers.firefox-rtr.rule=Host(`firefox2.$DOMAINNAME`)"
       - "traefik.http.routers.firefox-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.firefox-rtr.service=firefox-svc"
       - "traefik.http.services.firefox-svc.loadbalancer.server.port=5800"

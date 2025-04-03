@@ -24,7 +24,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.vscode-rtr.entrypoints=websecure"
-      - "traefik.http.routers.vscode-rtr.rule=Host(`code.$DOMAINNAME`)"
+      - "traefik.http.routers.vscode-rtr.rule=Host(`code2.$DOMAINNAME`)"
       - "traefik.http.routers.vscode-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.vscode-rtr.service=vscode-svc"
       - "traefik.http.services.vscode-svc.loadbalancer.server.port=8443"

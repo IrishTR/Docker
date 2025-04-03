@@ -1,5 +1,5 @@
 services:
-  # Jellyfin - Media Server
+# Jellyfin - Media Server
   jellyfin:
     image: linuxserver/jellyfin:latest
     container_name: jellyfin
@@ -25,7 +25,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.jellyfin-rtr.entrypoints=websecure"
-      - "traefik.http.routers.jellyfin-rtr.rule=Host(`jellyfin.$DOMAINNAME`)"
+      - "traefik.http.routers.jellyfin-rtr.rule=Host(`jellyfin2.$DOMAINNAME`)"
       - "traefik.http.routers.jellyfin-rtr.middlewares=chain-oauth@file"
       - "traefik.http.routers.jellyfin-rtr.service=jellyfin-svc"
       - "traefik.http.services.jellyfin-svc.loadbalancer.server.port=8096"
