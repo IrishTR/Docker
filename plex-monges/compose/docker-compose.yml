@@ -428,82 +428,30 @@ services:
       - "traefik.http.routers.plex-rtr.service=plex-svc"
       - "traefik.http.services.plex-svc.loadbalancer.server.port=32400"
 
-# #Plex Meta Manager - Automatic Metadata Manager for Plex
-#   plexmm:
-#     <<: *common-keys-apps
-#     image: linuxserver/kometa
-#     container_name: plexmm
-#     profiles: ["media", "all"]
-#     depends_on:
-#       - plex
-#     environment:
-#       <<: *default-tz-puid-pgid
-#       KOMETA_CONFIG: /config/config.yml #optional
-#       KOMETA_TIMES: 05:00 #optional
-# #      KOMETA_RUN: "True" #optional
-#       KOMETA_TEST: "False" #optional
-#       KOMETA_NO_MISSING: "False" #optional
-#       KOMETA_PLEXTOKEN: $PLEX_TOKEN
-#       KOMETA_TRAKTCLIENTID: $TRAKT_CLIENTID
-#       KOMETA_TRAKTCLIENTSECRET: $TRAKT_CLIENTSECRET
-#       KOMETA_TRAKTPIN: $TRAKT_PIN
-#       KOMETA_GITHUBTOKEN: $GITHUB_TOKEN
-#       KOMETA_RADARRAPI: $RADARR_API
-#       KOMETA_SONARRAPI: $SONARR_API
-#       KOMETA_MDBLISTAPI: $MDBLIST_API
-#       KOMETA_OMDBAPI: $OMDB_API
-#       KOMETA_TMDBAPI: $TMDB_API
-#       KOMETA_TAUTULLIAPI: $TAUTULLI_API
-#       KOMETA_SERVERIP: $SERVER_IP
-#       KOMETA_PLEXPORT: $PLEX_PORT
-#       KOMETA_NOTIFIARRAPI: $NOTIFIARR_API
-#     volumes:
-#       - $DOCKERDIR/plex-meta-manager/config:/config:rw
-#     secrets:
-#       - plex_token
-#       - trakt_clientid
-#       - trakt_clientsecret
-#       - trakt_pin
-#       - github_token
-#       - sonarr_api
-#       - radarr_api
-#       - mdblist_api
-#       - omdb_api
-#       - tmdb_api
-#       - tautulli_api
-
-# #Plex Image Cleanup
-#   plexic:
-#     <<: *common-keys-apps
-#     image: meisnate12/plex-image-cleanup
-#     container_name: plexic
-#     profiles: ["media", "all"]
-#     depends_on:
-#       - plex
-#     environment:
-#       <<: *default-tz-puid-pgid
-#       PLEX_PATH: /plex
-#       MODE: remove
-#       SCHEDULE: "07:00|weekly(sunday)"
-#       PLEX_URL: http://$SERVER_IP:$PLEX_PORT
-#       PLEX_TOKEN: /run/secrets/plex_token
-#       #DISCORD=https://discord.com/api/webhooks/###################/####################################################################
-#       TIMEOUT: 600
-#       SLEEP: 60
-#       IGNORE_RUNNING: True
-#       LOCAL_DB: False
-#       USE_EXISTING: False
-#       PHOTO_TRANSCODER: False
-#       EMPTY_TRASH: True
-#       CLEAN_BUNDLES: True
-#       OPTIMIZE_DB: True
-#       TRACE: False
-#       LOG_REQUESTS: True
-#     secrets:
-#       - plex_token
-#     volumes:
-#       - $DOCKERDIR/plex-image-cleanup/config:/config
-#       - $DOCKERDIR/Plex/DB/Library/Application Support/Plex Media Server:/plex
+# Jellyfin - Media Server
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    networks:
+      - default
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"
+    profiles: ["media", "all"]
+    user: $PUID:$PGID
+    devices:
+      - /dev/dri:/dev/dri # for harware transcoding
+    ports:
+      - "$JELLYFIN_PORT:8096"
+      # - "8920:8920" # Emby also uses same port if running both
+    environment:
+      UMASK_SET: 022
+      TZ: $TZ
+    volumes:
+      - $DOCKERDIR/jellyfin:/config
+      - $USERDIR/media:/data/media
+      - $DOWNLOAD_DIR:/data/downloads
+      - /dev/shm:/data/transcode 
 
 # Tautulli - Plex statistics and monitoring
   tautulli:
@@ -749,7 +697,7 @@ services:
     image: fyb3roptik/threadfin
     container_name: threadfin
     ports:
-      - 34400:34400
+      - $THREADFIN_PORT:34400
     environment:
       <<: *default-tz-puid-pgid
     volumes:
